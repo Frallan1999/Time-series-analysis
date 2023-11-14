@@ -33,3 +33,6 @@ significance = 0.05;
 figure
 acf(vowel, noLags, significance, 1)         % Not sure what plotIt = 1 entails? 
 title('Correlation-domain')
+
+%% 
+% test test test
