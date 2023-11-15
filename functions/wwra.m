@@ -55,7 +55,3 @@ function [ An,Bn,Pf,Pb ] = wwra( Rfb, M1, M2 )
     Pf = Pf + An(:,:,n+2)*Pn';
     Pb = Pb + Bn(:,:,n+2)*Pn;
   end 
-
-
-
- % Hej amanda

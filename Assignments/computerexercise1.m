@@ -34,6 +34,31 @@ y = filter(arma_1.c, arma_1.a, e);   % simulating an ARMA process
 % exaggerated number of omitted samples. Assume inital effects will be
 % negligible after say 100 samples 
 
+% Now we simulate using our created function "simulateMyARMA" 
 y_hat = simulateMyARMA(arma_1.c, arma_1.a, sigma2, N)
+
+% Now we want to simulate new versions
+N = 300; 
+sigma2 = 1.5; 
+
+y1 = simulateMyARMA(arma_1.c, arma_1.a, sigma2, N);
+y2 = simulateMyARMA(arma_2.c, arma_2.a, sigma2, N);
+
+figure(1)
+subplot(211)
+plot(y1)
+subplot(212)
+plot(y2)
+
+figure(2)
+subplot(211)
+pzmap(arma_1)
+subplot(212)
+pzmap(arma_2)
+
+% we can see that y2 proess diverges. When studying the poles and zeros for
+% that arma, we see a pole outside the unit circle. 
+
+%% Question 1 
 
                          
