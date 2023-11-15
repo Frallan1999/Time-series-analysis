@@ -35,7 +35,7 @@ y = filter(arma_1.c, arma_1.a, e);   % simulating an ARMA process
 % negligible after say 100 samples 
 
 % Now we simulate using our created function "simulateMyARMA" 
-y_hat = simulateMyARMA(arma_1.c, arma_1.a, sigma2, N)
+y_hat = simulateMyARMA(arma_1.c, arma_1.a, sigma2, N);
 
 % Now we want to simulate new versions
 N = 300; 
