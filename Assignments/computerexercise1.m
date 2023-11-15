@@ -17,4 +17,3 @@ C2 = [1 -0.18 -0.11];
 % Create ARMA polynomials 1 and 2 
 ARMA_poly_1 = idpoly(A1, [], C1);
 ARMA_poly_2 = idpoly(A2, [], C2);
-
