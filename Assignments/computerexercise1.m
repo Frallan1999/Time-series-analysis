@@ -34,9 +34,6 @@ y = filter(arma_1.c, arma_1.a, e);   % simulating an ARMA process
 % exaggerated number of omitted samples. Assume inital effects will be
 % negligible after say 100 samples 
 
-
-
-
-
+y_hat = simulateMyARMA(arma_1.c, arma_1.a, sigma2, N)
 
                          

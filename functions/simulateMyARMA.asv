@@ -1,0 +1,4 @@
+function simulateMyARMA(C, A, sigma2, N)
+
+e = sqrt(sigma2) * randn(N+100,1);  
+y = filter(C, A, e); 
