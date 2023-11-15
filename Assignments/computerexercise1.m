@@ -5,7 +5,7 @@
 %
 clear; 
 close all;
-addpath('../functions', '../data')     % Add this line to update the path
+addpath('functions', '/data')     % Add this line to update the path
 
 %%  2.1 Working with time series in Matlab
 % create A and C polynomials for ARMA process 
