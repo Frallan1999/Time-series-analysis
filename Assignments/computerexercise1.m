@@ -5,7 +5,8 @@
 %
 clear; 
 close all;
-addpath('functions', '/data')     % Add this line to update the path
+% addpath('functions', '/data')     % Add this line to update the path
+addpath('../functions', '../data')     % Add this line to update the path (Hanna)
 
 %%  2.1 Working with time series in Matlab
 % create A and C polynomials for ARMA process 
@@ -44,6 +45,8 @@ sigma2 = 1.5;
 y1 = simulateMyARMA(arma_1.c, arma_1.a, sigma2, N);
 y2 = simulateMyARMA(arma_2.c, arma_2.a, sigma2, N);
 
+%% Question 2
+
 figure(1)
 subplot(211)
 plot(y1)
@@ -59,6 +62,32 @@ pzmap(arma_2)
 % we can see that y2 proess diverges. When studying the poles and zeros for
 % that arma, we see a pole outside the unit circle. 
 
-%% Question 1 
+%% Question 2
+% Information about covariance.
+% Theoretical: The "kovarians" function in matlab can be used to calculate 
+% the theoretical covariance function r_y(k) for an arma process. Function 
+% assumes that the driving noise process has unit variance, i.e. V(et) =
+% sigma2 = 1. 
+% Estimated: use the function r_est = covf(y,m)
 
-                         
+% finding theoretical and estimated covariance for arma_1
+m = 20; 
+r_theo = kovarians(arma_1.c, arma_1.a, m);      % caluclate theoretical covariance function
+stem(0:m, r_theo*sigma2);
+hold on
+r_est = covf( y1, m+1 )         % calculate estimated covariance function
+stem(0:m, r_est, 'r');
+
+% Question: Why are the estimated and theoretical covariance functions not
+% identical?  
+% Answer: .... 
+              
+%% Question 3
+
+% call on function that does basic analysis by plotting the acf, pacf, 
+% and normplot of your data. 
+
+data = iddata(y1);          % make data an object type for estimation
+
+ar_model = arx( y1, [na]);  % est model using LS method arx for AR(na) 
+arma_model = armax( y1, [na nc])    % est model using MS method for ARMA(na, ca) 
