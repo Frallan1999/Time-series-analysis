@@ -57,3 +57,5 @@ function [ An,Bn,Pf,Pb ] = wwra( Rfb, M1, M2 )
   end 
 
 
+
+ % Hej amanda

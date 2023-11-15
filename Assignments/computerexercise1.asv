@@ -24,19 +24,11 @@ pzmap(arma_1)       % view poles and zeros of arma
 % Simulation of ARMA 
 rng(0);             % set seed
 sigma2 = 1;         % variance of error terms
-N = 100;              % length of resulting vector
+N = 50;              % length of resulting vector
 
 e = sqrt(sigma2) * randn(N,1);       % generate normal distributied noice, 
 y = filter(arma_1.c, arma_1.a, e);   % simulating an ARMA process
 
-% NOTE: always simulate longer process than needed when simulating a process
-% containing an AR part, and then omitt the initial samples. Prefer ab 
-% exaggerated number of omitted samples. Assume inital effects will be
-% negligible after say 100 samples 
-
-
-
-
-
-
+% always simulate longer process than needed when simulating a process
+% containing an AR part, and then o. This 
                          
