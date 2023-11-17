@@ -93,7 +93,7 @@ figure(3)
 basicPlot(y1,m,'Test')
 
 % from these plots we choose the model order
-na = 7;
+na = 1;
 nc = 2; %For now
 
 data = iddata(y1);          % make data an object type for estimation
