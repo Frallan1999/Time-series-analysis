@@ -45,7 +45,7 @@ sigma2 = 1.5;
 y1 = simulateMyARMA(arma_1.c, arma_1.a, sigma2, N);
 y2 = simulateMyARMA(arma_2.c, arma_2.a, sigma2, N);
 
-%% Question 2
+%% Question 1
 
 figure(1)
 subplot(211)
