@@ -90,7 +90,7 @@ stem(0:m, r_est, 'r');
 % and normplot of your data. 
 
 figure(3)
-basicPlot(y1,m,'Test')
+basicPlot(y,m,'Test')
 
 % from these plots we choose the model order
 na = 2;
@@ -99,8 +99,8 @@ nc = 2; %For now
 data = iddata(y1);          % make data an object type for estimation
 
 % We now estimate an ar and arma based on our choice of order: 
-ar_model = arx( y1, na);  % est model using LS method arx for AR(na) 
-arma_model = armax( y1, [na nc]);    % est model using MS method for ARMA(na, ca)
+ar_model = arx(data, na);  % est model using LS method arx for AR(na) 
+arma_model = armax(data, [na nc]);    % est model using MS method for ARMA(na, ca)
 
 % Display the estimated parameters, their std and model FPE (final prediction error) 
 present(ar_model)
@@ -109,8 +109,8 @@ present(arma_model)
 % Calculate error residual of estimated model, note that we switched places
 % of a and c polynomials to get the inverse
 
-%We wonder what to send in here - should it be poly and just y?
-e_hat = filter (arma_model.a, arma_model.c, y1);
+%We wonder what to send in here - should it be poly and just y? 
+e_hat = filter (arma_model.a, arma_model.c, y);
 
 figure(4) %How do we see that they are corrupted?
 plot(e_hat(1:20))
@@ -133,7 +133,7 @@ present(ar_model)
 
 %Testing AR(3), bit unsure of third coeff in first plot
 na = 3;
-ar_model = arx( y1, [na]);  
+ar_model = arx( y1, na);  
 e_hat_ar = myFilter(ar_model.a, ar_model.c, y1);
 basicPlot(e_hat_ar,m,'AR(3)');
 present(ar_model)
@@ -143,7 +143,7 @@ present(ar_model)
 
 %Testing AR(4)
 na = 4;
-ar_model = arx( y1, [na]);  
+ar_model = arx( y1, na);  
 e_hat_ar = myFilter(ar_model.a, ar_model.c, y1);
 basicPlot(e_hat_ar,m,'AR(4)');
 present(ar_model)
@@ -177,18 +177,3 @@ arma_model = armax( y1, [na nc]);
 e_hat_arma = myFilter(arma_model.a, arma_model.c, y1);
 basicPlot(e_hat_arma, m, 'ARMA(3,2)')
 present(arma_model)
-
-%
-
-
-
-
-
-
-
-
-
-
-
-
-
