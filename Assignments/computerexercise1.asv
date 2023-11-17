@@ -93,14 +93,14 @@ figure(3)
 basicPlot(y1,m,'Test')
 
 % from these plots we choose the model order
-na = 1;
+na = 2;
 nc = 2; %For now
 
 data = iddata(y1);          % make data an object type for estimation
 
 % We now estimate an ar and arma based on our choice of order: 
 ar_model = arx( y1, [na]);  % est model using LS method arx for AR(na) 
-arma_model = armax( y1, [na nc])    % est model using MS method for ARMA(na, ca)
+arma_model = armax( y1, [na nc]);    % est model using MS method for ARMA(na, ca)
 
 % Display the estimated parameters, their std and model FPE (final prediction error) 
 present(ar_model)
@@ -114,6 +114,61 @@ e_hat = filter (arma_model.a, arma_model.c, y1);
 
 figure(4) %How do we see that they are corrupted?
 plot(e_hat(1:20))
+
+%Remove the na first error estimations. We create a separate model for
+%this, myFilter. 
+e_hat = e_hat(length(arma_model.a):end);
+
+%% Question 3 contd. testing AR models
+
+basicPlot(y1,m,'Data y1')
+
+%Testing AR(2)
+na = 2;
+ar_model = arx( y1, [na]);  
+e_hat_ar = myFilter(ar_model.a, ar_model.c, y1);
+basicPlot(e_hat_ar,m,'AR(2)');
+present(ar_model)
+%Looks good, FPE: 1.518
+
+%Testing AR(3), bit unsure of third coeff in first plot
+na = 3;
+ar_model = arx( y1, [na]);  
+e_hat_ar = myFilter(ar_model.a, ar_model.c, y1);
+basicPlot(e_hat_ar,m,'AR(3)');
+present(ar_model)
+%Looks good, FPE: 1.516. Slightly lower, and third param significant
+%(slightly). However, smaller model is better and this is not SO much
+%better. 
+
+%Testing AR(4)
+na = 4;
+ar_model = arx( y1, [na]);  
+e_hat_ar = myFilter(ar_model.a, ar_model.c, y1);
+basicPlot(e_hat_ar,m,'AR(4)');
+present(ar_model)
+% The 4th is not significant, also higher FPE. 
+
+%% Question 3 contd. testing ARMA models - we see a bit of ringing in both ACF and PACF
+
+%Testing ARMA(2,1)
+na = 2;
+nc = 1; 
+arma_model = armax( y1, [na nc]);    
+e_hat_arma = myFilter(arma_model.a, arma_model.c, y1);
+basicPlot(e_hat_arma, m, 'ARMA(2,1)')
+present(arma_model)
+%Worse FPE here than in the AR models, 1.632. 
+
+%Testing ARMA(2,2) as we know it is the true. 
+na = 2;
+nc = 2; 
+arma_model = armax( y1, [na nc]);    
+e_hat_arma = myFilter(arma_model.a, arma_model.c, y1);
+basicPlot(e_hat_arma, m, 'ARMA(2,2)')
+present(arma_model)
+%Worse FPE here than in the AR models, 1.632. All significant. 
+
 
 
 
