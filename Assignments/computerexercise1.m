@@ -95,10 +95,10 @@ close all
 na = 2;
 nc = 0;     % For now
 data = iddata(y1);                  % make data an object type for estimation (not needed here)
-ar_model = arx(y1, na);             % estimate model using LS method arx for AR(na) 
+ar3_model = arx(y1, na);             % estimate model using LS method arx for AR(na) 
 arma_model = armax(y1, [na nc]);    % estimate model using MS method for ARMA(na, ca)
 
-present(ar_model)       % display estimated parameters, their std and model FPE
+present(ar3_model)       % display estimated parameters, their std and model FPE
 present(arma_model)     % display estimated parameters, their std and model FPE
 
 % Calculate error residual of estimated model, note that we switched places
@@ -119,10 +119,10 @@ close all
 
 % Testing AR(2) (Best) 
 na = 2;
-ar_model = arx(y1, na);  
-e_hat_ar = myFilter(ar_model.a, ar_model.c, y1);
+ar3_model = arx(y1, na);  
+e_hat_ar = myFilter(ar3_model.a, ar3_model.c, y1);
 basicPlot(e_hat_ar,m,'AR(2)');
-present(ar_model)
+present(ar3_model)
 % Looks good, FPE: 1.587 
 
 % Testing ARMA(2,1) - see a bit of ringing in both ACF and PACF
@@ -147,9 +147,9 @@ m = 20;                 % nbr of lags
 %% Question 4
 % try to fit for AR(p) p = 1...5 
 for p=1:5 
-    ar_model = arx(data, p);            % estimate AR model of order p 
-    ar_model = ar_model(p:end);         % remove n inital samples (as we now do this in filter)
-    rar = resid(ar_model, data);        % directly computes the residual for the given model 
+    ar3_model = arx(data, p);            % estimate AR model of order p 
+    ar3_model = ar3_model(p:end);         % remove n inital samples (as we now do this in filter)
+    rar = resid(ar3_model, data);        % directly computes the residual for the given model 
 
     %Plots the residuals and the noise together as well as parameter
     %estimates
@@ -159,28 +159,37 @@ for p=1:5
     plot(noise, 'r');
     title(p);
     basicPlot(rar.y, m, p + "residual")
-    present(ar_model)
+    present(ar3_model)
 end
 
 % try modelling data as AR(p) model. What does this mean we should do?
 % FPE and significance for the different ps 
 % p = 1, FPE = 1.782, all significant
 % p = 2, FPE = 1.388, all significant
-% p = 3, FPE = 1.282, all significant
-% p = 4, FPE = 1.239, all significant <- BEST 
+% p = 3, FPE = 1.282, all significant <-- chosen, not too different from 4
+% but fewer parameters
+% p = 4, FPE = 1.239, all significant
 % p = 5, FPE = 1.245, 5th not significant
 
 %% Question 5
 close all
 %  model the data using an ARMA(p, q)–models, for p, q = 1, 2,
 p = 1; 
-q = 1;
+q = 2;
 
 arma11_model = armax(data, [p q]);
+arma11_model = arma11_model(p:end);
 present(arma11_model)
 % FPE: 1.182, all signifiacnt
 
 % Which model would we use? (not knowing it is an ARMA)
+
+ar3_model = arx(data, 3);            % estimate AR model of order p 
+ar3_model = ar3_model(3:end);         % remove n inital samples (as we now do this in filter)
+figure(1)
+resid(ar3_model, data)
+figure(2)
+resid(arma11_model, data)
 
 %% Estimation of a SARIMA-process
 clear
