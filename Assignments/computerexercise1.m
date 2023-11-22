@@ -147,9 +147,9 @@ m = 20;                 % nbr of lags
 %% Question 4
 % try to fit for AR(p) p = 1...5 
 for p=1:5 
-    ar3_model = arx(data, p);            % estimate AR model of order p 
-    ar3_model = ar3_model(p:end);         % remove n inital samples (as we now do this in filter)
-    rar = resid(ar3_model, data);        % directly computes the residual for the given model 
+    ar_model = arx(data, p);            % estimate AR model of order p 
+    ar_model = ar_model(p:end);         % remove n inital samples (as we now do this in filter)
+    rar = resid(ar_model, data);        % directly computes the residual for the given model 
 
     %Plots the residuals and the noise together as well as parameter
     %estimates
@@ -159,7 +159,7 @@ for p=1:5
     plot(noise, 'r');
     title(p);
     basicPlot(rar.y, m, p + "residual")
-    present(ar3_model)
+    present(ar_model)
 end
 
 % try modelling data as AR(p) model. What does this mean we should do?
@@ -187,9 +187,9 @@ present(arma11_model)
 ar3_model = arx(data, 3);            % estimate AR model of order p 
 ar3_model = ar3_model(3:end);         % remove n inital samples (as we now do this in filter)
 figure(1)
-resid(ar3_model, data)
+res_ar = resid(ar3_model, data)
 figure(2)
-resid(arma11_model, data)
+res_arma = resid(arma11_model, data)
 
 %% Estimation of a SARIMA-process
 clear
@@ -237,6 +237,7 @@ model_armax = pem(data,model_init)
 res = resid(model_armax, data);             % Create new residual
 basicPlot(res.y, m, "residual"); 
 present(model_armax);
+figure(3)
 whitenessTest(res.y);
 % we now see that the seasonality in 12 is removed. 
 % The residual looks white enough 
