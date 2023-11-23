@@ -302,10 +302,10 @@ z_s = z_s(length(A24):end);
 z_data = iddata(z_s);
 figure()
 plot(z_s);
-basicPlot(z_s, 30, "z_s");          % Basic analysis through plots     
+basicPlot(z_s, 50, "z_s");          % Basic analysis through plots     
 %% ALT 1. 3. Iterate between (a) and (b) (for differentiation) 
 close all
-m = 30;
+m = 50;
 
 % initial model, estimate a1 and a2
 model_init = idpoly([1 0 0] ,[] ,[]);       % Set up inital model
@@ -323,6 +323,38 @@ res = resid(model_armax, z_data);             % Create new residual
 basicPlot(res.y, m, "residual"); 
 present(model_armax);
 whitenessTest(res.y);
+
+% now estimate a1,a2 AND c24, c48 (noted small bump in ACF)
+model_init = idpoly([1 0 0],[],[1 zeros(1,48)]);
+model_init.Structure.c.Free = [zeros(1,24) 1 zeros(1,23) 1];
+model_armax = pem(z_data,model_init)
+res = resid(model_armax, z_data);             % Create new residual
+basicPlot(res.y, m, "residual"); 
+present(model_armax);
+whitenessTest(res.y);
+% 
+% % now estimate a1,a2, a48 AND c24, c48 
+% % Concludecd a48 not significant
+% model_init = idpoly([1 0 0 zeros(1,46)],[],[1 zeros(1,48)]);
+% model_init.Structure.a.Free = [0 1 1 zeros(1,45) 1];
+% model_init.Structure.c.Free = [zeros(1,24) 1 zeros(1,23) 1];
+% model_armax = pem(z_data,model_init)
+% res = resid(model_armax, z_data);             % Create new residual
+% basicPlot(res.y, m, "residual"); 
+% present(model_armax);
+% whitenessTest(res.y);
+
+% now estimate a1,a2, a24 AND c24, c48 
+%A24 not significant
+model_init = idpoly([1 0 0 zeros(1,22)],[],[1 zeros(1,48)]);
+model_init.Structure.a.Free = [0 1 1 zeros(1,21) 1];
+model_init.Structure.c.Free = [zeros(1,24) 1 zeros(1,23) 1];
+model_armax = pem(z_data,model_init)
+res = resid(model_armax, z_data);             % Create new residual
+basicPlot(res.y, m, "residual"); 
+present(model_armax);
+whitenessTest(res.y);
+
 
 %% ALT 2: No differentiation
 close all
