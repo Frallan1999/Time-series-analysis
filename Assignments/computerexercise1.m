@@ -319,7 +319,6 @@ whitenessTest(res.y);
 model_init = idpoly([1 0 0],[],[1 zeros(1,24)]);
 model_init.Structure.c.Free = [zeros(1,24) 1];
 model_armax = pem(z_data,model_init)
-
 res = resid(model_armax, z_data);             % Create new residual
 basicPlot(res.y, m, "residual"); 
 present(model_armax);
