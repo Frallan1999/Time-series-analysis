@@ -316,27 +316,18 @@ present(model_armax);
 whitenessTest(res.y);
 
 % now estimate a1,a2 AND c24
-model_init = idpoly([1 0 0],[],[1 zeros(1,24)]);
+model_init = idpoly([1 0 0],[],[1 zeros(1,23) 1]);
 model_init.Structure.c.Free = [zeros(1,24) 1];
 model_armax = pem(z_data,model_init)
 res = resid(model_armax, z_data);             % Create new residual
 basicPlot(res.y, m, "residual"); 
 present(model_armax);
 whitenessTest(res.y);
+checkIfNormal(res.y,"Final model");
 
-% now estimate a1,a2 AND c24, c48 (noted small bump in ACF)
-model_init = idpoly([1 0 0],[],[1 zeros(1,48)]);
-model_init.Structure.c.Free = [zeros(1,24) 1 zeros(1,23) 1];
-model_armax = pem(z_data,model_init)
-res = resid(model_armax, z_data);             % Create new residual
-basicPlot(res.y, m, "residual"); 
-present(model_armax);
-whitenessTest(res.y);
-% 
-% % now estimate a1,a2, a48 AND c24, c48 
-% % Concludecd a48 not significant
-% model_init = idpoly([1 0 0 zeros(1,46)],[],[1 zeros(1,48)]);
-% model_init.Structure.a.Free = [0 1 1 zeros(1,45) 1];
+% % now estimate a1,a2 AND c24, c48 (noted small bump in ACF)
+% %With strong c24 we don't need c48
+% model_init = idpoly([1 0 0],[],[1 zeros(1,23) 1 zeros(1,24)]);
 % model_init.Structure.c.Free = [zeros(1,24) 1 zeros(1,23) 1];
 % model_armax = pem(z_data,model_init)
 % res = resid(model_armax, z_data);             % Create new residual
@@ -344,16 +335,18 @@ whitenessTest(res.y);
 % present(model_armax);
 % whitenessTest(res.y);
 
-% now estimate a1,a2, a24 AND c24, c48 
-%A24 not significant
-model_init = idpoly([1 0 0 zeros(1,22)],[],[1 zeros(1,48)]);
-model_init.Structure.a.Free = [0 1 1 zeros(1,21) 1];
-model_init.Structure.c.Free = [zeros(1,24) 1 zeros(1,23) 1];
-model_armax = pem(z_data,model_init)
-res = resid(model_armax, z_data);             % Create new residual
-basicPlot(res.y, m, "residual"); 
-present(model_armax);
-whitenessTest(res.y);
+%Tested to add a24 and/or a48, and  --> not significant
+%c72 (significant but not better)
+
+%% Simulate data to test
+A = model_armax.A;
+C = model_armax.C;
+e = randn(10000,1);
+simuldata = filter(C,A,e);
+simuldata = simuldata(101:end);
+e_hat = resid(model_armax,simuldata);
+basicPlot(e_hat.y,50,"Fake data");
+
 
 
 %% ALT 2: No differentiation

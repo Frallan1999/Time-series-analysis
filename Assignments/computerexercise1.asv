@@ -302,7 +302,7 @@ z_s = z_s(length(A24):end);
 z_data = iddata(z_s);
 figure()
 plot(z_s);
-basicPlot(z_s, 30, "z_s");          % Basic analysis through plots     
+basicPlot(z_s, 50, "z_s");          % Basic analysis through plots     
 %% ALT 1. 3. Iterate between (a) and (b) (for differentiation) 
 close all
 m = 50;
@@ -316,7 +316,7 @@ present(model_armax);
 whitenessTest(res.y);
 
 % now estimate a1,a2 AND c24
-model_init = idpoly([1 0 0],[],[1 zeros(1,24)]);
+model_init = idpoly([1 0 0],[],[1 zeros(1,23) 1]);
 model_init.Structure.c.Free = [zeros(1,24) 1];
 model_armax = pem(z_data,model_init)
 res = resid(model_armax, z_data);             % Create new residual
@@ -324,23 +324,29 @@ basicPlot(res.y, m, "residual");
 present(model_armax);
 whitenessTest(res.y);
 
-% now estimate a1,a2 AND c24, c48 (noted small bump in ACF)
-model_init = idpoly([1 0 0],[],[1 zeros(1,48)]);
-model_init.Structure.c.Free = [zeros(1,24) 1 zeros(1,23) 1];
-model_armax = pem(z_data,model_init)
-res = resid(model_armax, z_data);             % Create new residual
-basicPlot(res.y, m, "residual"); 
-present(model_armax);
-whitenessTest(res.y);
+% % now estimate a1,a2 AND c24, c48 (noted small bump in ACF)
+% %With strong c24 we don't need c48
+% model_init = idpoly([1 0 0],[],[1 zeros(1,23) 1 zeros(1,24)]);
+% model_init.Structure.c.Free = [zeros(1,24) 1 zeros(1,23) 1];
+% model_armax = pem(z_data,model_init)
+% res = resid(model_armax, z_data);             % Create new residual
+% basicPlot(res.y, m, "residual"); 
+% present(model_armax);
+% whitenessTest(res.y);
 
-% now estimate a1,a2 AND c24, c48 (noted small bump in ACF)
-model_init = idpoly([1 0 0],[],[1 zeros(1,48)]);
-model_init.Structure.c.Free = [zeros(1,24) 1 zeros(1,23) 1];
-model_armax = pem(z_data,model_init)
-res = resid(model_armax, z_data);             % Create new residual
-basicPlot(res.y, m, "residual"); 
-present(model_armax);
-whitenessTest(res.y);
+%Tested to add a24 and/or a48, and  --> not significant
+%c72 (significant but not better)
+
+%% Simulate data to test
+A = model_armax.A;
+C = model_armax.C;
+A24 = [1 zeros(1,23) -1];
+A_star = conv(A,A24);
+e = randn(10000,1);
+simuldata = filter(C,A_star,e);
+simuldata = simuldata(101:end);
+e_hat = filter(A_star,C,)
+
 
 
 %% ALT 2: No differentiation
