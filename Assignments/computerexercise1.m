@@ -193,6 +193,10 @@ figure(2)
 resid(arma11_model, data)
 res_arma = resid(arma11_model, data)
 
+% arma lower variance
+% arma lower order
+% easier to estimate AR parameters 
+
 %% Estimation of a SARIMA-process
 clear
 close all
@@ -353,16 +357,18 @@ basicPlot(e_hat.y,50,"Fake data");
 close all
 m = 30;
 
-% initial model, estimate a1, a2, a24
-model_init = idpoly([1 zeros(1,24)] ,[] ,[]);       % Set up inital model
-model_init.Structure.a.Free = [0 1 1 zeros(1,21) 1];
+% initial model, estimate a1, a2, a24 a25 26 
+model_init = idpoly([1 zeros(1,26)] ,[] ,[1 zeros(1,23) 1]);       % Set up inital model
+model_init.Structure.a.Free = [0 1 1 zeros(1,21) 1 1 1];
+model_init.Structure.c.Free = [zeros(1,24) 1];
+
 model_armax = pem(z,model_init);         % Estimate a1 and a2 
 res = resid(model_armax, z);             % Create residual
 basicPlot(res.y, m, "residual");             
 present(model_armax);
 whitenessTest(res.y);
 
-% initial model, estimate a1, a2, a24 and c23
+%% initial model, estimate a1, a2, a24 and c23
 model_init = idpoly([1 zeros(1,24)] ,[] ,[1 zeros(1,23)]);       % Set up inital model
 model_init.Structure.c.Free = [zeros(1,23) 1];
 model_init.Structure.a.Free = [0 1 1 zeros(1,21) 1];

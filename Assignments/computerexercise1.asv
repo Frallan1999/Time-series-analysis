@@ -193,6 +193,10 @@ figure(2)
 resid(arma11_model, data)
 res_arma = resid(arma11_model, data)
 
+% arma lower variance
+% arma lower order
+% easier to estimate AR parameters 
+
 %% Estimation of a SARIMA-process
 clear
 close all
@@ -323,6 +327,7 @@ res = resid(model_armax, z_data);             % Create new residual
 basicPlot(res.y, m, "residual"); 
 present(model_armax);
 whitenessTest(res.y);
+checkIfNormal(res.y,"Final model");
 
 % % now estimate a1,a2 AND c24, c48 (noted small bump in ACF)
 % %With strong c24 we don't need c48
@@ -340,12 +345,11 @@ whitenessTest(res.y);
 %% Simulate data to test
 A = model_armax.A;
 C = model_armax.C;
-A24 = [1 zeros(1,23) -1];
-A_star = conv(A,A24);
 e = randn(10000,1);
-simuldata = filter(C,A_star,e);
+simuldata = filter(C,A,e);
 simuldata = simuldata(101:end);
-e_hat = filter(A_star,C,)
+e_hat = resid(model_armax,simuldata);
+basicPlot(e_hat.y,50,"Fake data");
 
 
 
@@ -354,8 +358,8 @@ close all
 m = 30;
 
 % initial model, estimate a1, a2, a24
-model_init = idpoly([1 zeros(1,24)] ,[] ,[]);       % Set up inital model
-model_init.Structure.a.Free = [0 1 1 zeros(1,21) 1];
+model_init = idpoly([1 zeros(1,26)] ,[] ,[]);       % Set up inital model
+model_init.Structure.a.Free = [0 1 1 zeros(1,21) 1 1 1];
 model_armax = pem(z,model_init);         % Estimate a1 and a2 
 res = resid(model_armax, z);             % Create residual
 basicPlot(res.y, m, "residual");             
