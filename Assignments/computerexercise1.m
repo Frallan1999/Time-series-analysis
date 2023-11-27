@@ -329,7 +329,7 @@ present(model_armax);
 whitenessTest(res.y);
 checkIfNormal(res.y,"Final model");
 
-% % now estimate a1,a2 AND c24, c48 (noted small bump in ACF)
+% now estimate a1,a2 AND c24, c48 (noted small bump in ACF)
 % %With strong c24 we don't need c48
 % model_init = idpoly([1 0 0],[],[1 zeros(1,23) 1 zeros(1,24)]);
 % model_init.Structure.c.Free = [zeros(1,24) 1 zeros(1,23) 1];
