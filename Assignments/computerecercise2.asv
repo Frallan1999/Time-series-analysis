@@ -130,11 +130,9 @@ close all;
 clc; 
 
 A1 = [1 0 0]; 
-C1 = [1 0];
-model_init = idpoly (A1, [], C1);
-etilde_data = iddata(etilde)
-error_model = pem(etilde_data,model_init); 
-present(error_model)
-res_tilde = resid (error_model, etilde_data );
+C1 = [0 0 0 0 1];
+error_model = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
+Mba2 = pem(z,error_model); present(Mba2)
+etilde = resid (Mba2, z );
 
 
