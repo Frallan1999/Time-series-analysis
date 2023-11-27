@@ -126,15 +126,18 @@ plot(etilde);
 basicPlot(etilde.y,m,'etilde');
 
 %% Determine orders for A1 and C1, model etilde = C1/A1 * e
+%In the plot above, we suspect that we're dealing with an ARMA(1,0)
 close all;
 clc; 
 
-A1 = [1 0 0]; 
-C1 = [1 0];
+A1 = [1 0]; 
+C1 = [1];
 model_init = idpoly (A1, [], C1);
-etilde_data = iddata(etilde)
+etilde_data = iddata(etilde.y)
 error_model = pem(etilde_data,model_init); 
 present(error_model)
 res_tilde = resid (error_model, etilde_data );
+basicPlot(res_tilde.y,m,'ARMA(1,0)');
+whitenessTest(res_tilde.y);
 
 
