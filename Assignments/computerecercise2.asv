@@ -8,7 +8,7 @@ close all;
 % addpath('functions', '/data')     % Add this line to update the path
 addpath('../functions', '../data')     % Add this line to update the path (Hanna)
 
-%%  generating some data following the Box-Jenkins model:
+%% Generate some data following the Box-Jenkins model:
 
 rng(0)
 n = 500;                % Number of samples
@@ -22,7 +22,50 @@ A2 = [1 .90 .78];
 C=1;
 B=[0000.4];
 e = sqrt(1.5) * randn(n + 100,1);
-y = filter(C,A1e) + filter(B,A2,x); % Create the output
+y = filter(C,A1,e) + filter(B,A2,x); % Create the output
 
 x = x(101:end) , y = y(101:end) % Omit initial samples 
 clear A1, A2, C, B, e, w, A3, C3
+
+%% 
+plot(x)
+
+%% Create an ARMA-model for the input xt as function of white noise
+
+m=50;
+plot(x)
+basicPlot(x,m,'x-data') 
+
+%Model 1
+%ACF ringing, PACF peak at 1 --> AR(1)?
+na = 1;
+nc = 0;
+data = iddata(x);                   
+model_1 = armax(data, [na nc]); 
+present(model_1);
+e_hat = myFilter(model_1.a, model_1.c, x);
+basicPlot(e_hat,m,'ARMA(1,0)')
+
+whitenessTest(e_hat)
+
+%Model 1 contd
+na = 1;
+nc = 2;
+data = iddata(x);                   
+model_1 = armax(data, [na nc]); 
+present(model_1);
+e_hat = myFilter(model_1.a, model_1.c, x);
+basicPlot(e_hat,m,'ARMA(1,0)')
+
+whitenessTest(e_hat)
+
+%Model 2 
+
+%% Testing with idpoly instead, didn't make a difference
+
+model_init = idpoly([1 0] ,[] ,[]);       % Set up inital model
+model_1 = pem(data,model_init);           % Estimate a1 and a2 
+res = resid(model_1, data);             % Create residual
+basicPlot(res.y, m, "residual");            % Does not seem  wite
+present(model_1);
+whitenessTest(res.y);
