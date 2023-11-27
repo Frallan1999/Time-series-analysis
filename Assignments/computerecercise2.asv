@@ -27,16 +27,21 @@ y = filter(C,A1,e) + filter(B,A2,x); % Create the output
 x = x(101:end) , y = y(101:end) % Omit initial samples 
 clear A1, A2, C, B, e, w, A3, C3
 
-%% 
-plot(x)
-
-%% Create an ARMA-model for the input xt as function of white noise
+%% Plotting the data
+close all
+clc
 
 m=50;
 plot(x)
 basicPlot(x,m,'x-data') 
 
-%Model 1
+%% Create an ARMA-model for the input xt as function of white noise
+close all
+clc
+
+m=50;
+
+%Initial guess 
 %ACF ringing, PACF peak at 1 --> AR(1)?
 na = 1;
 nc = 0;
@@ -48,24 +53,28 @@ basicPlot(e_hat,m,'ARMA(1,0)')
 
 whitenessTest(e_hat)
 
-%Model 1 contd
+%Knowing it's an ARMA(1,2), test it with an ARMA(1,2) too 
+%Model 1 according to instructions
 na = 1;
 nc = 2;
 data = iddata(x);                   
 model_1 = armax(data, [na nc]); 
 present(model_1);
 e_hat = myFilter(model_1.a, model_1.c, x);
-basicPlot(e_hat,m,'ARMA(1,0)')
+basicPlot(e_hat,m,'ARMA(1,2)')
 
 whitenessTest(e_hat)
 
-%Model 2 
+%We tested the same thing with idpoly and got the same result
+% Seems that it's nice to use when wanting to control what orders are
+% "active" in the polynomial
 
-%% Testing with idpoly instead, didn't make a difference
+%% Pre-whitening
+close all;
+clc; 
 
-model_init = idpoly([1 0] ,[] ,[]);       % Set up inital model
-model_1 = pem(data,model_init);           % Estimate a1 and a2 
-res = resid(model_1, data);             % Create residual
-basicPlot(res.y, m, "residual");            % Does not seem  wite
-present(model_1);
-whitenessTest(res.y);
+M=40;
+stem(−M:M,crosscorr(wt ,epst,M)); 
+title(’Cross correlation function’), xlabel(’Lag’)
+hold on
+plot(−M:M, 2/sqrt(n)∗ones(1,2∗M+1),’−−’) plot(−M:M, −2/sqrt(n)∗ones(1,2∗M+1),’−−’) hold off

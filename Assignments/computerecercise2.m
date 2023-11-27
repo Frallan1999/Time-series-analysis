@@ -70,3 +70,23 @@ whitenessTest(e_hat)
 % "active" in the polynomial
 
 %% Pre-whitening
+close all;
+clc; 
+
+
+M=40;
+stem(−M:M,crosscorr(wt ,epst,M)); 
+title(’Cross correlation function’), xlabel(’Lag’)
+hold on
+plot(−M:M, 2/sqrt(n)∗ones(1,2∗M+1),’−−’) 
+plot(−M:M, −2/sqrt(n)∗ones(1,2∗M+1),’−−’) 
+hold off
+
+
+A2 =...;
+B =...;
+Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
+z = iddata(y,x);
+Mba2 = pem(z,Mi); present(Mba2)
+etilde = resid (Mba2, z );
+
