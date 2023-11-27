@@ -22,7 +22,7 @@ A2 = [1 .90 .78];
 C=1;
 B=[0000.4];
 e = sqrt(1.5) * randn(n + 100,1);
-y = filter(C,A1,e) + filter(B,A2,x); % Create the output
+y = filter(C,A1e) + filter(B,A2,x); % Create the output
 
 x = x(101:end) , y = y(101:end) % Omit initial samples 
 clear A1, A2, C, B, e, w, A3, C3
