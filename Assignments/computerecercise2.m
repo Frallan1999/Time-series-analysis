@@ -87,9 +87,9 @@ plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--')
 hold off
 
 %% Determine suitable model orders for delay, A, B
-% Delay: We don't see any obvious delay (BUT IT SHOULD BE 4)
+% Delay: Delay exceeds confidence interval at lag 4, thus should be d = 4. 
 % R (order for A2): Could be 2, as we have some ringing in the correlation.
-% S: Order for B. 
+% S: We see that it's decaying immedeatly, as s+d = time of decay, s = 0. 
 %TBC WHY IT IS LIKE THIS
 
 A2 = [1 0 0]; 
@@ -98,4 +98,23 @@ Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
 z = iddata(y,x);
 Mba2 = pem(z,Mi); present(Mba2)
 etilde = resid (Mba2, z );
+
+%% Check etilde 
+close all;
+clc; 
+
+%etilde and x should be uncorrelated --> Looks good, not sign diff from 0
+M=40;
+stem(-M:M,crosscorr(etilde.y ,x ,M)); 
+title('Cross correlation function'), xlabel('Lag')
+hold on
+plot(-M:M, 2/sqrt(n)*ones(1,2*M+1), 'r--') 
+plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--') 
+hold off
+
+% Is etilde white? 
+% No, but we have now only modelled half of the BJ model, as y depends on
+% something with x AND the error term.   
+basicPlot(etilde.y,m,'etilde');
+whitenessTest(etilde.y);
 
