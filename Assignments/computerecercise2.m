@@ -46,9 +46,9 @@ m=50;
 na = 1;
 nc = 0;
 data = iddata(x);                   
-model_1 = armax(data, [na nc]); 
-present(model_1);
-e_hat = myFilter(model_1.a, model_1.c, x);
+model_x = armax(data, [na nc]); 
+present(model_x);
+e_hat = myFilter(model_x.a, model_x.c, x);
 basicPlot(e_hat,m,'ARMA(1,0)')
 
 whitenessTest(e_hat)
@@ -58,9 +58,9 @@ whitenessTest(e_hat)
 na = 1;
 nc = 2;
 data = iddata(x);                   
-model_1 = armax(data, [na nc]); 
-present(model_1);
-e_hat = myFilter(model_1.a, model_1.c, x);
+x_arma = armax(data, [na nc]); 
+present(x_arma);
+e_hat = myFilter(x_arma.a, x_arma.c, x);
 basicPlot(e_hat,m,'ARMA(1,2)')
 
 whitenessTest(e_hat)
@@ -70,22 +70,29 @@ whitenessTest(e_hat)
 % "active" in the polynomial
 
 %% Pre-whitening
+
+eps_t = myFilter(x_arma.a, x_arma.c, y); 
+w_t = myFilter(x_arma.a, x_arma.c,x); 
+%% Compute CCF for eps_t = H(z) * w_t + v_t
 close all;
 clc; 
 
-
 M=40;
-stem(−M:M,crosscorr(wt ,epst,M)); 
-title(’Cross correlation function’), xlabel(’Lag’)
+stem(-M:M,crosscorr(w_t ,eps_t,M)); 
+title('Cross correlation function'), xlabel('Lag')
 hold on
-plot(−M:M, 2/sqrt(n)∗ones(1,2∗M+1),’−−’) 
-plot(−M:M, −2/sqrt(n)∗ones(1,2∗M+1),’−−’) 
+plot(-M:M, 2/sqrt(n)*ones(1,2*M+1),'−−') 
+plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'−−') 
 hold off
 
+%% Determine suitable model orders for delay, A, B
+% Delay: We don't see any obvious delay
+% R (order for A2): Could be 2, as we have some ringing in the correlation
+% plot
 
-A2 =...;
-B =...;
-Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
+%A2 = 
+%B =...;
+%Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
 z = iddata(y,x);
 Mba2 = pem(z,Mi); present(Mba2)
 etilde = resid (Mba2, z );
