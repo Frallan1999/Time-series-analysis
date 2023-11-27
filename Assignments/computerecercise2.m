@@ -20,7 +20,7 @@ x = filter (C3,A3,w);           % Create the input
 A1 = [1 -.65];
 A2 = [1 .90 .78];
 C=1;
-B=[0000.4];
+B=[0 0 0 0 .4];
 e = sqrt(1.5) * randn(n + 100,1);
 y = filter(C,A1,e) + filter(B,A2,x); % Create the output
 
@@ -70,29 +70,31 @@ whitenessTest(e_hat)
 % "active" in the polynomial
 
 %% Pre-whitening
-
+close all;
 eps_t = myFilter(x_arma.a, x_arma.c, y); 
 w_t = myFilter(x_arma.a, x_arma.c,x); 
+basicPlot(eps_t,m,'Eps_t');
+basicPlot(w_t,m,'W_t');
+
 %% Compute CCF for eps_t = H(z) * w_t + v_t
 close all;
-clc; 
-
 M=40;
 stem(-M:M,crosscorr(w_t ,eps_t,M)); 
 title('Cross correlation function'), xlabel('Lag')
 hold on
-plot(-M:M, 2/sqrt(n)*ones(1,2*M+1),'−−') 
-plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'−−') 
+plot(-M:M, 2/sqrt(n)*ones(1,2*M+1), 'r--') 
+plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--') 
 hold off
 
 %% Determine suitable model orders for delay, A, B
-% Delay: We don't see any obvious delay
-% R (order for A2): Could be 2, as we have some ringing in the correlation
-% plot
+% Delay: We don't see any obvious delay (BUT IT SHOULD BE 4)
+% R (order for A2): Could be 2, as we have some ringing in the correlation.
+% S: Order for B. 
+%TBC WHY IT IS LIKE THIS
 
-%A2 = 
-%B =...;
-%Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
+A2 = [1 0 0]; 
+B = [0 0 0 0 1];
+Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
 z = iddata(y,x);
 Mba2 = pem(z,Mi); present(Mba2)
 etilde = resid (Mba2, z );
