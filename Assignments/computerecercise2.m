@@ -353,5 +353,93 @@ close all;
 clear; 
 clc; 
 load svedala; 
+y = svedala; 
 
 % data sampled every hour, with estimated mean value subtracted (11.35◦ C) 
+
+% Suitable model parameters for the data set are
+A = [ 1 -1.79 0.84 ]; 
+C = [ 1 -0.18 -0.11 ];
+
+%% One step prediction 
+k = 1;      % prediction step 
+
+[Fk, Gk] = polydiv( C, A, k );  % solves the Diophantine equation (different for each k) 
+yhat_1 = filter( Gk, C, y );    % k-step prediction, y_hat_t+k|t, 
+yhat_1 = yhat_1(4:end)          % Is it 4 because length(a) + k? 
+var_1 = var(y(4:end) - yhat_1)
+
+
+%% k-step prediction using k = 3 
+k3 = 3;      % prediction step 
+close all; 
+m = 50; 
+
+[Fk3, Gk3] = polydiv( C, A, k3 );       % solves the Diophantine equation (different for each k) 
+yhat_3 = filter( Gk3, C, y );           % k-step prediction, y_hat_t+k|t, 
+yhat_3 = yhat_3(6:end);                 % Is it 4 because length(a) + k? 
+error_3 = y(6:end) - yhat_3; 
+
+mean3 = mean(error_3)                           
+variance3 = var(error_3)
+theoretical_variance3 = sum(Fk3.^2) * var_1
+conf_3 = 2*sqrt(theoretical_variance3);
+conf_int3 = [mean3-conf_3, mean3+conf_3]
+
+error3_outside = (sum(error_3>conf_int3(2)) + sum(error_3<conf_int3(1)))/length(error_3)  
+
+% 1. Estimated mean and the expectation of the prediction error
+% 2. Comment on difference in variance: somewhat higher theoretical
+% 3. Determine the theoretical 95% confidence interval
+% 4. How large percentage of the prediction errors are outside the 95%
+
+% 5. plotting
+figure(1)
+plot(y);
+hold on; 
+plot(yhat_3);
+title('process and 3 step prediction')
+hold off;
+
+figure(2)
+plot(error_3)
+figure(3)
+basicPlot(error_3, m, '3 step error')
+% We see an MA(2) 
+
+%% k-step prediction using k = 26
+k26 = 26;      % prediction step 
+close all; 
+
+[Fk26, Gk26] = polydiv( C, A, k26 );    % solves the Diophantine equation (different for each k) 
+yhat_26 = filter( Gk26, C, y );            % k-step prediction, y_hat_t+k|t, 
+yhat_26 = yhat_26(29:end);                  % Is it 4 because length(a) + k? 
+error_26 = y(29:end) - yhat_26;
+
+mean26 =  mean(error_26)
+variance26 = var(error_26)
+theoretical_variance26 = sum(Fk26.^2) * var_1
+conf_26 = 2*sqrt(theoretical_variance26);
+conf_int26 = [mean26-conf_26, mean26+conf_26]
+
+error26_outside = (sum(error_26>conf_int26(2)) + sum(error_26<conf_int26(1)))/length(error_26)
+
+% 1. Estimated mean and the expectation of the prediction error
+% 2. Comment on difference in variance: much higher theoretical
+% 3. Determine the theoretical 95% confidence interval
+% 4. How large percentage of the prediction errors are outside the 95%
+
+% 5. plotting
+m = 100;
+figure(1)
+plot(y);
+hold on; 
+plot(yhat_26);
+title('process and 26 step prediction')
+hold off;
+
+figure(2)
+plot(error_26)
+figure(3)
+basicPlot(error_26, m, '26 step error')
+% We see a periocidity of 25

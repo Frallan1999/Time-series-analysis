@@ -297,7 +297,6 @@ m = 50;
 plot(etilde.y);
 basicPlot(etilde.y,m,'etilde');
 
-
 %% Modelling the A1 and C1 polynomials contd
 close all;
 clc; 
@@ -312,29 +311,104 @@ present(error_model)
 res_tilde = resid (error_model, etilde_data );
 basicPlot(res_tilde.y,m,'ARMA(1,0)');
 whitenessTest(res_tilde.y);
-
-% Second modell gues ARMA(1,1)
-A1 = [1 0]; 
-C1 = [1 0];
-model_init = idpoly (A1, [], C1);
-etilde_data = iddata(etilde.y)
-error_model = pem(etilde_data,model_init); 
-present(error_model)
-res_tilde = resid (error_model, etilde_data );
-basicPlot(res_tilde.y,m,'ARMA(1,0)');
-whitenessTest(res_tilde.y);
 % --> Looking good 
 
 %% Reestimate the full model with pem
-% Note that model will change when we do it all together again 
-% We know have all our polynomials  
+% We know have all our polynomials, and need to reestimate the parameters   
 
 A1 = [1 0];
 A2 = [1 0]; 
 B = [0 0 0 1 0 0];
-C = [1 0];                % Before named C1 
+C = [1];                % Before named C1 
 Mi = idpoly(1, B, C, A1, A2);
+Mi.Structure.b.Free = [zeros(1,4) 1 1];
 z = iddata(y,x);
 MboxJ = pem(z,Mi);
 present(MboxJ)
 ehat = resid(MboxJ,z);      % the estimate of the noise process e_t
+
+%% Final analysis of ehat (is our entier model good enough?)
+%ehat and x should be uncorrelated, looks OK (few outliers but ~95% conf)
+M=40;
+stem(-M:M,crosscorr(ehat.y ,x ,M)); 
+title('Cross correlation function'), xlabel('Lag')
+hold on
+plot(-M:M, 2/sqrt(n)*ones(1,2*M+1), 'r--') 
+plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--') 
+hold off
+
+
+%% Final analysis of ehat contd.
+%Whiteness of ehat -> white, but not normal, can we trust? 
+whitenessTest(ehat.y);
+basicPlot(ehat.y,m,'e-hat');
+
+%To trust whiteness test, ehat needs to be normally distributed
+%Test for normal distributed: data, label, type of test (D=default -->
+%D'Augustino-Pearson K2 test, then level of alpha (1-alpha) = confidence)
+checkIfNormal(ehat.y,'e-hat','D',0.05);
+
+%% 2.3 Prediction of ARMA-processes
+close all; 
+clear; 
+clc; 
+load svedala; 
+y = svedala; 
+
+% data sampled every hour, with estimated mean value subtracted (11.35◦ C) 
+
+% Suitable model parameters for the data set are
+A = [ 1 -1.79 0.84 ]; 
+C = [ 1 -0.18 -0.11 ];
+
+%% One step prediction 
+k = 1;      % prediction step 
+
+[Fk, Gk] = polydiv( C, A, k );  % solves the Diophantine equation (different for each k) 
+yhat_1 = filter( Gk, C, y );    % k-step prediction, y_hat_t+k|t, 
+yhat_1 = yhat_1(4:end)          % Is it 4 because length(a) + k? 
+var_1 = var(y(4:end) - yhat_1)
+
+
+%% k-step prediction using k = 3 
+k3 = 3;      % prediction step 
+
+[Fk3, Gk3] = polydiv( C, A, k3 );       % solves the Diophantine equation (different for each k) 
+yhat_3 = filter( Gk3, C, y );           % k-step prediction, y_hat_t+k|t, 
+yhat_3 = yhat_3(6:end);                 % Is it 4 because length(a) + k? 
+error_3 = y(6:end) - yhat_3; 
+
+mean3 = mean(error_3)                           
+variance3 = var(error_3)
+theoretical_variance3 = sum(Fk3.^2) * var_1
+conf_3 = 2*sqrt(theoretical_variance3);
+conf_int3 = [mean3-conf_3, mean3+conf_3]
+
+error3_outside = (sum(error_3>conf_int3(2)) + sum(error_3<conf_int3(1)))/length(error_3)  
+
+% 1. Estimated mean and the expectation of the prediction error
+% 2. Comment on difference in variance: somewhat higher theoretical
+% 3. Determine the theoretical 95% confidence interval
+% 4. How large percentage of the prediction errors are outside the 95%
+
+%% k-step prediction using k = 26
+k26 = 26;      % prediction step 
+
+[Fk26, Gk26] = polydiv( C, A, k26 );    % solves the Diophantine equation (different for each k) 
+yhat_26 = filter( Gk26, C, y );            % k-step prediction, y_hat_t+k|t, 
+yhat_26 = yhat_26(29:end);                  % Is it 4 because length(a) + k? 
+error_26 = y(29:end) - yhat_26;
+
+mean26 =  mean(error_26)
+variance26 = var(error_26)
+theoretical_variance26 = sum(Fk26.^2) * var_1
+conf_26 = 2*sqrt(theoretical_variance26);
+conf_int26 = [mean26-conf_26, mean26+conf_26]
+
+error26_outside = (sum(error_26>conf_int26(2)) + sum(error_26<conf_int3(1)))/length(error_26)
+
+% 1. Estimated mean and the expectation of the prediction error
+% 2. Comment on difference in variance: much higher theoretical
+% 3. Determine the theoretical 95% confidence interval
+% 4. How large percentage of the prediction errors are outside the 95%
+
