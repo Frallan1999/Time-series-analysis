@@ -366,12 +366,14 @@ k = 1;      % prediction step
 
 [Fk, Gk] = polydiv( C, A, k );  % solves the Diophantine equation (different for each k) 
 yhat_1 = filter( Gk, C, y );    % k-step prediction, y_hat_t+k|t, 
-yhat_1 = yhat_1(4:end)          % Is it 4 because length(a) + k? 
+yhat_1 = yhat_1(4:end)          % Is it 4 because length(c) + k? 
 var_1 = var(y(4:end) - yhat_1)
 
 
 %% k-step prediction using k = 3 
 k3 = 3;      % prediction step 
+close all; 
+m = 50; 
 
 [Fk3, Gk3] = polydiv( C, A, k3 );       % solves the Diophantine equation (different for each k) 
 yhat_3 = filter( Gk3, C, y );           % k-step prediction, y_hat_t+k|t, 
@@ -391,8 +393,23 @@ error3_outside = (sum(error_3>conf_int3(2)) + sum(error_3<conf_int3(1)))/length(
 % 3. Determine the theoretical 95% confidence interval
 % 4. How large percentage of the prediction errors are outside the 95%
 
+% 5. plotting
+figure(1)
+plot(y);
+hold on; 
+plot(yhat_3);
+title('process and 3 step prediction')
+hold off;
+
+figure(2)
+plot(error_3)
+figure(3)
+basicPlot(error_3, m, '3 step error')
+% We see an MA(2) 
+
 %% k-step prediction using k = 26
 k26 = 26;      % prediction step 
+close all; 
 
 [Fk26, Gk26] = polydiv( C, A, k26 );    % solves the Diophantine equation (different for each k) 
 yhat_26 = filter( Gk26, C, y );            % k-step prediction, y_hat_t+k|t, 
@@ -405,10 +422,141 @@ theoretical_variance26 = sum(Fk26.^2) * var_1
 conf_26 = 2*sqrt(theoretical_variance26);
 conf_int26 = [mean26-conf_26, mean26+conf_26]
 
-error26_outside = (sum(error_26>conf_int26(2)) + sum(error_26<conf_int3(1)))/length(error_26)
+error26_outside = (sum(error_26>conf_int26(2)) + sum(error_26<conf_int26(1)))/length(error_26)
 
 % 1. Estimated mean and the expectation of the prediction error
 % 2. Comment on difference in variance: much higher theoretical
 % 3. Determine the theoretical 95% confidence interval
 % 4. How large percentage of the prediction errors are outside the 95%
+
+% 5. plotting
+m = 100;
+figure(1)
+plot(y);
+hold on; 
+plot(yhat_26);
+title('process and 26 step prediction')
+hold off;
+
+figure(2)
+plot(error_26)
+figure(3)
+basicPlot(error_26, m, '26 step error')
+% We see a periocidity of 25
+
+%% 2.4 Prediction of ARMAX-processes
+close all;
+clear; 
+clc;
+
+load svedala
+load sturup    % 3 step prediction, can be used as external signal to svedala
+x = sturup;
+y = svedala; 
+
+% Set model parameters 
+A= [ 1 -1.49 0.57 ];
+B = [ 0 0 0 0.28 -0.26 ]; 
+C= [1];
+
+basicPlot(sturup,50, 'sturup')
+% How large is the delay in this temperature model? 3 - how do we know? 
+
+%% Form the k - step prediction 
+% using k = 3 and 26
+close all; 
+clc; 
+
+k = 3;
+% k = 26; 
+
+[Fk, Gk] = polydiv( C, A, k );  % solves the (old) Diophantine equation (different for each k) 
+[Fk_hat, Gk_hat] = polydiv(conv(B,Fk), C, k);  % solves the (old) Diophantine equation (different for each k) 
+
+yhat = filter(Fk_hat, [1], x) + filter(Gk_hat, C, x) + filter(Gk, C, y);   
+% In second term above, why do we input x when it is a 4 step prediction?? 
+
+yhat = yhat(9+k:end);       % 9 is order of Gk_hat as that is order of C 
+% How do we know what order to remove??
+
+error = y(9+k:end) - yhat; 
+var(error)
+
+% 5. plotting
+figure(1)
+plot(y);
+hold on; 
+plot(yhat);
+title('process and 3 step prediction')
+hold off;
+
+m = 50; 
+figure(2)
+plot(error)
+basicPlot(error, m, '3 step prediction error')
+% We see an MA(2) 
+
+%% If we forget one term in y prec´diction
+close all; 
+
+yhat_wrong =  filter(Gk_hat, C, x) + filter(Gk, C, y);   
+yhat_wrong = yhat_wrong(9+k:end);       % 9 is order of Gk_hat as that is order of C 
+
+figure(1)
+plot(yhat_wrong);
+hold on; 
+plot(yhat);
+hold off;
+
+% For k = 3, fk_hat is zero and we can see no difference, 
+% For k = 26, we see that we get a super small amplitude for the wrong one 
+
+%% 2.5 Prediction of SARIMA-processes
+close all;
+clear; 
+clc;
+
+load svedala
+y = svedala; 
+
+m = 100;
+plot(y)
+basicPlot(y,m,'svedala')
+% We see a season of 24 hours 
+
+%% Model svedala with differentiation
+A24 = [ 1 zeros(1, 23) -1 ];
+
+y_s = filter(A24, 1, y);            % filter on seasonality 12
+y_s = y_s(length(A24):end);
+y_data = iddata(y_s);
+figure()
+plot(y_s);
+basicPlot(y_s, 50, "y_s");          % Basic analysis through plots 
+
+% From comp ex 1. 
+model_init = idpoly([1 0 0],[],[1 zeros(1,23) 1]);
+model_init.Structure.c.Free = [zeros(1,24) 1];
+found_model = pem(y_data,model_init)
+res = resid(found_model, y_data);             % Create new residual
+basicPlot(res.y, m, "residual"); 
+present(found_model);
+whitenessTest(res.y);
+checkIfNormal(res.y,"Final model");
+
+%% Create predictions from found model
+close all; 
+clc;
+
+% Parameters from our found model 
+A = found_model.a;
+C = found_model.c;
+
+% Prediction
+k = 3; 
+[Fk, Gk] = polydiv( C, A, k );  % solves the Diophantine equation (different for each k) 
+yhat_k = filter( Gk, C, y_s );    % k-step prediction, y_hat_t+k|t, 
+yhat_k = yhat_k(length(C)+k:end)          % Is it length(c) + k? 
+var_k = var(y_s(length(C)+k:end) - yhat_k)
+
 
