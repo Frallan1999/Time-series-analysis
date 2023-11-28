@@ -126,13 +126,40 @@ plot(etilde);
 basicPlot(etilde.y,m,'etilde');
 
 %% Determine orders for A1 and C1, model etilde = C1/A1 * e
+%In the plot above, we suspect that we're dealing with an ARMA(1,0)
 close all;
 clc; 
 
-A1 = [1 0 0]; 
-C1 = [0 0 0 0 1];
-error_model = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
-Mba2 = pem(z,error_model); present(Mba2)
-etilde = resid (Mba2, z );
+A1 = [1 0]; 
+C1 = [1];
+model_init = idpoly (A1, [], C1);
+etilde_data = iddata(etilde.y)
+error_model = pem(etilde_data,model_init); 
+present(error_model)
+res_tilde = resid (error_model, etilde_data );
+basicPlot(res_tilde.y,m,'ARMA(1,0)');
+whitenessTest(res_tilde.y);
+
+%% Reestimate with pem 
+A1 = [1 0];
+A2 = [1 0 0];
+B = [0 0 0 0 1];
+C = [1];
+Mi = idpoly(1, B, C, A1, A2);
+z = iddata(y,x);
+MboxJ = pem(z,Mi);
+present(MboxJ)
+ehat = resid(MboxJ,z);
+
+%% Final analysis of ehat
+
+%ehat and x should be uncorrelated, looks OK (few outliers but ~95% conf)
+M=40;
+stem(-M:M,crosscorr(ehat.y ,x ,M)); 
+title('Cross correlation function'), xlabel('Lag')
+hold on
+plot(-M:M, 2/sqrt(n)*ones(1,2*M+1), 'r--') 
+plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--') 
+hold off
 
 

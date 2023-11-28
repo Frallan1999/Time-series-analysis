@@ -8,7 +8,8 @@ close all;
 % addpath('functions', '/data')     % Add this line to update the path
 addpath('../functions', '../data')     % Add this line to update the path (Hanna)
 
-%% Generate some data following the Box-Jenkins model:
+%% 2.1 Modelling of exogenous input signal
+%Generate some data following the Box-Jenkins model:
 
 rng(0)
 n = 500;                % Number of samples
@@ -90,7 +91,6 @@ hold off
 % Delay: Delay exceeds confidence interval at lag 4, thus should be d = 4. 
 % R (order for A2): Could be 2, as we have some ringing in the correlation.
 % S: We see that it's decaying immedeatly, as s+d = time of decay, s = 0. 
-%TBC WHY IT IS LIKE THIS
 
 A2 = [1 0 0]; 
 B = [0 0 0 0 1];
@@ -139,5 +139,39 @@ present(error_model)
 res_tilde = resid (error_model, etilde_data );
 basicPlot(res_tilde.y,m,'ARMA(1,0)');
 whitenessTest(res_tilde.y);
+
+%% Reestimate the full model with pem
+% Note that model will change when we do it all together again 
+
+A1 = [1 0];
+A2 = [1 0 0];
+B = [0 0 0 0 1];
+C = [1];
+Mi = idpoly(1, B, C, A1, A2);
+z = iddata(y,x);
+MboxJ = pem(z,Mi);
+present(MboxJ)
+ehat = resid(MboxJ,z);
+
+%% Final analysis of ehat
+%ehat and x should be uncorrelated, looks OK (few outliers but ~95% conf)
+M=40;
+stem(-M:M,crosscorr(ehat.y ,x ,M)); 
+title('Cross correlation function'), xlabel('Lag')
+hold on
+plot(-M:M, 2/sqrt(n)*ones(1,2*M+1), 'r--') 
+plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--') 
+hold off
+
+%Whiteness of ehat -> super white!
+whitenessTest(ehat.y);
+basicPlot(ehat.y,m,'e-hat');
+
+%To trust whiteness test, ehat needs to be normally distributed
+%Test for normal distributed: data, label, type of test (D=default -->
+%D'Augustino-Pearson K2 test, then level of alpha (1-alpha) = confidence)
+checkIfNormal(ehat.y,'e-hat','D',0.05);
+
+%% 2.2 Hairdryer data
 
 
