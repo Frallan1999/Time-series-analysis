@@ -560,4 +560,3 @@ yhat_k = yhat_k(length(C)+k:end)          % Is it length(c) + k?
 var_k = var(y_s(length(C)+k:end) - yhat_k)
 
 % Better for k = 26 but not for k = 3. 
-
