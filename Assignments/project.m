@@ -14,5 +14,8 @@ clc
 
 load proj23.mat
 
-%% A 
+%% (A)
+
+%% (B)
+
 
