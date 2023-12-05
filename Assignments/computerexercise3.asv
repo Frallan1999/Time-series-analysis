@@ -174,22 +174,19 @@ subplot(212);
 plot(thx);
 
 %% 2.3 Using Kalman filter for 2-step prediction
-
 clc; 
 close all;
 
 % Simulating data
+rng(0);
 N = 10000;
 ee = 0.1*randn(N,1);
 A0 = [1 -0.8 0.2];
 y = filter(1, A0, ee);
-Re = [1e-6 0; 0 1e-6];
-Rw = 0.1;
 
-% Define the state space equations
 A = eye(2);
-Re = [0.004 0; 0 0]; % State covariance matrix (zero values for parameters that don't change over time)
-Rw = 1.25; % Observation variance, we think 0 for simulated data
+Re = [1e-6 0; 0 1e-6];
+Rw = 1;
 
 % Set some initial values
 xt_t1 = [0 0]'; % Initial state values: m0, expected value of x1 (WE CHANGED FROM xtt_1)
@@ -206,7 +203,7 @@ yt2 = zeros(1,N); % Two step prediction
 % the y values for t-3. We also stop at N - 2 as we don't have the true
 % y-values for e.g. N + 1. 
 
-for t=3:N-2 %Note that we're not using N-2 here. Why? 
+for t=3:N-2 %Why N-2 and not -1?
     Ct = [-y(t-1) -y(t-2)]; % C_{t | t-1}
     yhat(t) = Ct * xt_t1; % y_t{t | t-1}
     ehat(t) = y(t) - yhat(t); % e_t = y_t - y_{t | t-1}
@@ -227,16 +224,20 @@ for t=3:N-2 %Note that we're not using N-2 here. Why?
     % x_t is assumed to be constant over time, 
     % i.e. the parameters are not changing in this case
 
-    Ct2 = [-y(t+1) -y(t)]; %C_{t+2 | t}
+    Ct2 = [-yt1(t+1) -y(t)]; %C_{t+2 | t} %Why does this work - having yt1 here?
     yt2(t+2) = Ct2 * xt_t; % y_{t+2|t} = C_{t+2|t} x_{t|t}
     
     Xsave(:,t) = xt_t;
 
 end
 
-plot(y(end-100−2:end-2))
+figure(2)
+plot(y(end-100-2:end-2))
 hold on
 plot(yt1(end-100-1:end-1),'g')
 plot(yt2(end-100:end),'r')
 hold off
 legend('y', 'k=1', 'k=2')
+
+%Compute sum of ehat for last 200 samples, why not all?
+sum(ehat(end-200:end))

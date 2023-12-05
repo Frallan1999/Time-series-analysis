@@ -174,7 +174,6 @@ subplot(212);
 plot(thx);
 
 %% 2.3 Using Kalman filter for 2-step prediction
-clc; 
 close all;
 
 % Simulating data
@@ -185,8 +184,8 @@ A0 = [1 -0.8 0.2];
 y = filter(1, A0, ee);
 
 A = eye(2);
-Re = [1e-6 0; 0 1e-6];
-Rw = 1;
+Re = [1e-7 0; 0 1e-7];
+Rw = 0.1; %We got a better predictions with Rw = 1 and 10. 
 
 % Set some initial values
 xt_t1 = [0 0]'; % Initial state values: m0, expected value of x1 (WE CHANGED FROM xtt_1)
@@ -224,16 +223,30 @@ for t=3:N-2 %Why N-2 and not -1?
     % x_t is assumed to be constant over time, 
     % i.e. the parameters are not changing in this case
 
-    Ct2 = [-y(t+1) -y(t)]; %C_{t+2 | t}
+    Ct2 = [-yt1(t+1) -y(t)]; %C_{t+2 | t} %Why does this work - having yt1 here?
     yt2(t+2) = Ct2 * xt_t; % y_{t+2|t} = C_{t+2|t} x_{t|t}
     
     Xsave(:,t) = xt_t;
 
 end
 
+figure(1)
 plot(y(end-100-2:end-2))
 hold on
 plot(yt1(end-100-1:end-1),'g')
 plot(yt2(end-100:end),'r')
 hold off
 legend('y', 'k=1', 'k=2')
+
+figure(2)
+plot(Xsave')
+
+%Compute sum of ehat for last 200 samples, why not all? 
+sum(ehat(end-200:end))
+ehat1 = y(2:end)' - yt1(1:end-1);
+ehat2 = y(3:end)' - yt2(1:end-2);
+ehat1_sumsq = sum(ehat1(end-200:end).^2)
+ehat2_sumsq = sum(ehat2(end-200:end).^2)
+
+%% 2.4 Quality control of a process
+
