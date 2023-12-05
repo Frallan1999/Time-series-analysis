@@ -601,4 +601,3 @@ y_hat_test = y_hat_test(24:end);
 error_test = y(97:end) - y_hat_test;
 var(error_test)
 % Better for k = 26 but not for k = 3. 
-
