@@ -58,6 +58,54 @@ for t=3:N-2
 end
 
 %% Prep 2
+clc;
+close all;
+
+% Simulate u_t where u_t is a Markov chain
+
+% Define transition probabilities
+p11 = 7/8;
+p22 = 7/8;
+p12 = 1/8;
+p21 = 1/8; 
+
+% Set number of interations
+n = 5000;
+
+% Preallocate a vector to store the states of the chain
+u = zeros(1,n);
+
+%Initialize state of the chain
+state = 1;
+
+% Simulate the chain
+for t = 1:n
+    u(t) = state; 
+
+    % Draw a random number 
+    r = rand();
+
+    % Given state 1, transition to state 1 with prob p11
+    % Given state 1, transition to state 2 with prob p12
+    if state == 1 && r < p11
+        state = 1; 
+    elseif state == 1 && r >= p11
+        state = -1;
+
+    % Given state 2, transition to state 1 with prob p21
+    % Given state 2, transition to state 2 with prob p22
+    elseif state == -1 && r < p21
+        state = 1;
+    elseif state == -1 && r >= p21
+        state = -1;
+
+    end
+end
+
+% Plot state of chain at each iteration
+plot(u)
+xlabel('Iteration')
+ylabel('State')
 
 %% 2.1.1 Recursive least squares
 
