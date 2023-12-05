@@ -231,6 +231,7 @@ ee = 0.1*randn(N,1);
 A0 = [1 -0.8 0.2];
 y = filter(1, A0, ee);
 
+% Define the state space equations.
 A = eye(2);
 Re = [1e-7 0; 0 1e-7];
 Rw = 0.1; %We got a better predictions with Rw = 1 and 10. 
