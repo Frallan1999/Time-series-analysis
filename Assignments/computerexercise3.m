@@ -13,24 +13,24 @@ addpath('../functions', '../data')     % Add this line to update the path (Hanna
 % The Kalman filter
 
 % Simulate N samples of a process to test our code
-N = 500;
+N = 1000;
 A_sim = [1 -1.79 0.84];
 e = randn(N,1);
 y = filter(A_sim, 1, e); % y is our simulated data (tested via pzmap that we got the poles in the right places)
 
 % Define the state space equations
 A = eye(2);
-Re = [0.1 0; 0 0]; % State covariance matrix (We suspect zero values for parameters that don't change over time)
+Re = [0 0; 0 0]; % State covariance matrix (We suspect zero values for parameters that don't change over time)
 Rw = 0; % Observation variance, we think 0 for simulated data
 
 % Set some initial values
-xt_t1 = [0 0]; % Initial state values: m0, expected value of x1 (WE CHANGED FROM xtt_1)
+xt_t1 = [0 0]'; % Initial state values: m0, expected value of x1 (WE CHANGED FROM xtt_1)
 Rxx_1 = 10 * eye(2); % Initial state variance: Var X1, large V0 --> small trust in initial values
 
 % Vectors to store values in
 Xsave = zeros(2,N); % Stored states: For an AR(2) we have two hidden states, a1 and a2
 ehat = zeros(1,N); % Prediction residual
-yt1 = zeros(1,N) % One step prediction
+yt1 = zeros(1,N); % One step prediction
 yt2 = zeros(1,N); % Two step prediction
 
 % The filter uses data up to time t-1 to predict value at t, then update
@@ -39,19 +39,21 @@ yt2 = zeros(1,N); % Two step prediction
 % y-values for e.g. N + 1. 
 
 for t=3:N-2
-    Ct = [-y(t-1) -y(t-2)] % C_{t | t-1}
+    Ct = [-y(t-1) -y(t-2)]; % C_{t | t-1}
     yhat(t) = Ct * xt_t1; % y_t{t | t-1}
-    ehat = y(t) - yhat(t); % e_t = y_t - y_{t | t-1}
+    ehat(t) = y(t) - yhat(t); % e_t = y_t - y_{t | t-1}
 
     % Update
     Ryy = Ct * Rxx_1 * Ct' + Rw; % R^{yy}_{t | t-1}
-    Kt = % K_t
-    xt_t =  %x_{t | t}
-    Rxx = % R^{xx}_{t | t}
+    Kt = Rxx_1 * Ct' / Ryy; % K_t = Rxx{t| t-1} * Ct' * Ryy{t | t-1}
+    xt_t = xt_t1 + Kt*ehat(t); %x_{t | t}
+    Rxx = Rxx_1 - Kt * Ct * Rxx_1; % R^{xx}_{t | t}
 
     % Predict the next state
-    xt_t1 = % x_{t+1 | t}
-    Rxx_1 = % R^{xx}_{t+1 | t}
+    xt_t1 = A * xt_t; % x_{t+1 | t}, don't forget to add B and U if needed
+    Rxx_1 = A * Rxx * A' + Re; % R^{xx}_{t+1 | t}
+
+    Xsave(:,t) = xt_t;
 
 end
 
@@ -123,5 +125,52 @@ minlambda = lambda_line(minindex)
 clc; 
 close all;
 
+% The Kalman filter
+N = length(tar2);
+y = tar2;
 
+% Define the state space equations
+A = eye(2);
+Re = [0.004 0; 0 0]; % State covariance matrix (zero values for parameters that don't change over time)
+Rw = 1.25; % Observation variance, we think 0 for simulated data
+
+% Set some initial values
+xt_t1 = [0 0]'; % Initial state values: m0, expected value of x1 (WE CHANGED FROM xtt_1)
+Rxx_1 = 10 * eye(2); % Initial state variance: Var X1, large V0 --> small trust in initial values
+
+% Vectors to store values in
+Xsave = zeros(2,N); % Stored states: For an AR(2) we have two hidden states, a1 and a2
+ehat = zeros(1,N); % Prediction residual
+yt1 = zeros(1,N); % One step prediction
+yt2 = zeros(1,N); % Two step prediction
+
+% The filter uses data up to time t-1 to predict value at t, then update
+% using the prediction error. We start from t = 3, because we don't have
+% the y values for t-3. We also stop at N - 2 as we don't have the true
+% y-values for e.g. N + 1. 
+
+for t=3:N-2
+    Ct = [-y(t-1) -y(t-2)]; % C_{t | t-1}
+    yhat(t) = Ct * xt_t1; % y_t{t | t-1}
+    ehat(t) = y(t) - yhat(t); % e_t = y_t - y_{t | t-1}
+
+    % Update
+    Ryy = Ct * Rxx_1 * Ct' + Rw; % R^{yy}_{t | t-1}
+    Kt = Rxx_1 * Ct' / Ryy; % K_t = Rxx{t| t-1} * Ct' * Ryy{t | t-1}
+    xt_t = xt_t1 + Kt*ehat(t); %x_{t | t}
+    Rxx = Rxx_1 - Kt * Ct * Rxx_1; % R^{xx}_{t | t}
+
+    % Predict the next state
+    xt_t1 = A * xt_t; % x_{t+1 | t}, don't forget to add B and U if needed
+    Rxx_1 = A * Rxx * A' + Re; % R^{xx}_{t+1 | t}
+
+    Xsave(:,t) = xt_t;
+
+end
+
+figure(1);
+subplot(211);
+plot(Xsave')
+subplot(212);
+plot(thx);
 
