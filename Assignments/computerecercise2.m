@@ -28,7 +28,7 @@ y = filter(C,A1,e) + filter(B,A2,x); % Create the output
 x = x(101:end) , y = y(101:end) % Omit initial samples 
 clear A1, A2, C, B, e, w, A3, C3
 
-%% Plotting the data
+%% Plotting the INPUT data
 close all
 clc
 
@@ -74,8 +74,8 @@ whitenessTest(e_hat)
 close all;
 eps_t = myFilter(x_arma.a, x_arma.c, y); 
 w_t = myFilter(x_arma.a, x_arma.c,x); 
-basicPlot(eps_t,m,'Eps_t');
-basicPlot(w_t,m,'W_t');
+basicPlot(eps_t,m,'Eps_t');         % it is not white
+basicPlot(w_t,m,'W_t');             % it looks white
 
 %% Compute CCF for eps_t = H(z) * w_t + v_t
 close all;
@@ -95,7 +95,7 @@ hold off
 A2 = [1 0 0]; 
 B = [0 0 0 0 1];
 Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
-z = iddata(y,x);
+z = iddata(y,x);    % fatttar att första är data och andra är input 
 Mba2 = pem(z,Mi); present(Mba2)
 etilde = resid (Mba2, z );
 
@@ -112,18 +112,15 @@ plot(-M:M, 2/sqrt(n)*ones(1,2*M+1), 'r--')
 plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--') 
 hold off
 
-% Is etilde white? 
+%% Is etilde white? 
 % No, but we have now only modelled half of the BJ model, as y depends on
 % something with x AND the error term.   
-basicPlot(etilde.y,m,'etilde');
-whitenessTest(etilde.y);
-
-%% Plot etilde
 close all;
 clc; 
 
-plot(etilde);
 basicPlot(etilde.y,m,'etilde');
+whitenessTest(etilde.y);
+figure()
 
 %% Determine orders for A1 and C1, model etilde = C1/A1 * e
 %In the plot above, we suspect that we're dealing with an ARMA(1,0)
@@ -131,7 +128,7 @@ close all;
 clc; 
 
 A1 = [1 0]; 
-C1 = [1];
+C1 = [];
 model_init = idpoly (A1, [], C1);
 etilde_data = iddata(etilde.y)
 error_model = pem(etilde_data,model_init); 
@@ -146,7 +143,7 @@ whitenessTest(res_tilde.y);
 A1 = [1 0];
 A2 = [1 0 0];
 B = [0 0 0 0 1];
-C = [1];
+C = [];
 Mi = idpoly(1, B, C, A1, A2);
 z = iddata(y,x);
 MboxJ = pem(z,Mi);
@@ -154,7 +151,7 @@ present(MboxJ)
 ehat = resid(MboxJ,z);      % the estimate of the noise process e_t
 
 %% Final analysis of ehat
-%ehat and x should be uncorrelated, looks OK (few outliers but ~95% conf)
+% ehat and x should be uncorrelated, looks OK (few outliers but ~95% conf)
 M=40;
 stem(-M:M,crosscorr(ehat.y ,x ,M)); 
 title('Cross correlation function'), xlabel('Lag')
@@ -255,9 +252,9 @@ hold off
 % s: decay starts at 5, as s+d = time of decay, s = 5-3 = 2. 
 
 A2 = [1 0]; 
-B = [0 0 0 1 0 0];
+B = [0 0 0 1 0 0];              % is this correct or should it be B = [000100] and then change stryctyre free
 Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);           % yt = B(z)z^-d/A2(z) * x_t (delay is in the B vector) 
-Mi.Structure.b.Free = [zeros(1,4) 1 1];
+% Mi.Structure.b.Free = [zeros(1,3) 1 1 1];
 z = iddata(y,x);
 Mba2 = pem(z,Mi); 
 present(Mba2)
@@ -279,7 +276,7 @@ hold off
 % Looks good enough 
 
 % Is etilde white? 
-% No, but we have now only modelled half of the BJ model, as y depends on
+% NO, but we have now only modelled half of the BJ model, as y depends on
 % something with x AND the error term.   
 basicPlot(etilde.y,m,'etilde');
 whitenessTest(etilde.y);
@@ -311,17 +308,18 @@ present(error_model)
 res_tilde = resid (error_model, etilde_data );
 basicPlot(res_tilde.y,m,'ARMA(1,0)');
 whitenessTest(res_tilde.y);
-% --> Looking good 
+
+% --> Looking good ?????
 
 %% Reestimate the full model with pem
 % We know have all our polynomials, and need to reestimate the parameters   
 
 A1 = [1 0];
 A2 = [1 0]; 
-B = [0 0 0 1 0 0];
+B = [0 0 0 1 0 0];      % do we want coefficient before z^-3 in B to be 1?
 C = [1];                % Before named C1 
 Mi = idpoly(1, B, C, A1, A2);
-Mi.Structure.b.Free = [zeros(1,4) 1 1];
+% Mi.Structure.b.Free = [zeros(1,3) 1 1 1];
 z = iddata(y,x);
 MboxJ = pem(z,Mi);
 present(MboxJ)
@@ -366,8 +364,8 @@ k = 1;      % prediction step
 
 [Fk, Gk] = polydiv( C, A, k );  % solves the Diophantine equation (different for each k) 
 yhat_1 = filter( Gk, C, y );    % k-step prediction, y_hat_t+k|t, 
-yhat_1 = yhat_1(4:end)          % Is it 4 because length(c) + k? 
-var_1 = var(y(4:end) - yhat_1)
+yhat_1 = yhat_1(3:end)          % Largest of Gk and C (not + k) 
+var_1 = var(y(3:end) - yhat_1)
 
 
 %% k-step prediction using k = 3 
@@ -377,14 +375,14 @@ m = 50;
 
 [Fk3, Gk3] = polydiv( C, A, k3 );       % solves the Diophantine equation (different for each k) 
 yhat_3 = filter( Gk3, C, y );           % k-step prediction, y_hat_t+k|t, 
-yhat_3 = yhat_3(6:end);                 % Is it 4 because length(a) + k? 
-error_3 = y(6:end) - yhat_3; 
+yhat_3 = yhat_3(5:end);                 % Is it 4 because length(a) + k? 
+error_3 = y(5:end) - yhat_3; 
 
-mean3 = mean(error_3)                           
+mean3 = mean(error_3)          %                  
 variance3 = var(error_3)
 theoretical_variance3 = sum(Fk3.^2) * var_1
 conf_3 = 2*sqrt(theoretical_variance3);
-conf_int3 = [mean3-conf_3, mean3+conf_3]
+conf_int3 = [0-conf_3, 0+conf_3]
 
 error3_outside = (sum(error_3>conf_int3(2)) + sum(error_3<conf_int3(1)))/length(error_3)  
 
@@ -413,8 +411,8 @@ close all;
 
 [Fk26, Gk26] = polydiv( C, A, k26 );    % solves the Diophantine equation (different for each k) 
 yhat_26 = filter( Gk26, C, y );            % k-step prediction, y_hat_t+k|t, 
-yhat_26 = yhat_26(29:end);                  % Is it 4 because length(a) + k? 
-error_26 = y(29:end) - yhat_26;
+yhat_26 = yhat_26(28:end);                  % Is it 4 because length(a) + k? 
+error_26 = y(28:end) - yhat_26;
 
 mean26 =  mean(error_26)
 variance26 = var(error_26)
@@ -459,7 +457,7 @@ A= [ 1 -1.49 0.57 ];
 B = [ 0 0 0 0.28 -0.26 ]; 
 C= [1];
 
-basicPlot(sturup,50, 'sturup')
+basicPlot(sturup, 50, 'sturup')
 % How large is the delay in this temperature model? 3 - how do we know? 
 
 %% Form the k - step prediction 
@@ -467,8 +465,8 @@ basicPlot(sturup,50, 'sturup')
 close all; 
 clc; 
 
-k = 3;
-% k = 26; 
+% k = 3;
+ k = 26; 
 
 [Fk, Gk] = polydiv( C, A, k );  % solves the (old) Diophantine equation (different for each k) 
 [Fk_hat, Gk_hat] = polydiv(conv(B,Fk), C, k);  % solves the (old) Diophantine equation (different for each k) 
@@ -534,6 +532,46 @@ figure()
 plot(y_s);
 basicPlot(y_s, 50, "y_s");          % Basic analysis through plots 
 
+%% ALT 2: No differentiation
+close all
+m = 30;
+
+% initial model, estimate a1, a2, a24, a25, a26, c24
+model_init = idpoly([1 zeros(1,26)] ,[] ,[1 zeros(1,23) 0]);       % Set up inital model
+model_init.Structure.a.Free = [0 1 1 zeros(1,21) 1 1 1];
+model_init.Structure.c.Free = [zeros(1,24) 1];
+
+model_armax = pem(y,model_init);         
+res = resid(model_armax, y);             % Create residual
+basicPlot(res.y, m, "residual");             
+present(model_armax);
+whitenessTest(res.y);
+
+%% Create predictions from found (NON DIFF) model
+close all; 
+clc;
+
+% Parameters from our found model 
+A = model_armax.a;
+C = model_armax.c;
+
+% Prediction
+k = 3;
+% k = 26;
+[Fk, Gk] = polydiv( C, A, k );    % solves the Diophantine equation (different for each k) 
+yhat_k = filter( Gk, C, y);    % k-step prediction, y_hat_t+k|t, 
+yhat_k = yhat_k(52:end);          % Is it length(c) + k? 
+
+error = y(52:end) - yhat_k; 
+var(error)
+basicPlot(error,50,'prediction error')
+% Glöm ej analysera prediction error med ACF och PACF
+
+%% Create predictions from found model (WRONG) 
+close all; 
+clc;
+
+
 % From comp ex 1. 
 model_init = idpoly([1 0 0],[],[1 zeros(1,23) 1]);
 model_init.Structure.c.Free = [zeros(1,24) 1];
@@ -544,20 +582,23 @@ present(found_model);
 whitenessTest(res.y);
 checkIfNormal(res.y,"Final model");
 
-%% Create predictions from found model
-close all; 
-clc;
-
 % Parameters from our found model 
 A = found_model.a;
 C = found_model.c;
 
 % Prediction
-k = 26; 
-[Fk, Gk] = polydiv( C, A, k );  % solves the Diophantine equation (different for each k) 
+k = 3; 
+[Fk, Gk] = polydiv( C, A, k );    % solves the Diophantine equation (different for each k) 
 yhat_k = filter( Gk, C, y_s );    % k-step prediction, y_hat_t+k|t, 
-yhat_k = yhat_k(length(C)+k:end)          % Is it length(c) + k? 
-var_k = var(y_s(length(C)+k:end) - yhat_k)
+yhat_k = yhat_k(50:end);          % Is it length(c) + k? 
 
+error = y_s(50:end) - yhat_k; 
+var(error)
+
+% test
+y_hat_test = filter(1, A24, yhat_k);
+y_hat_test = y_hat_test(24:end);
+error_test = y(97:end) - y_hat_test;
+var(error_test)
 % Better for k = 26 but not for k = 3. 
 
