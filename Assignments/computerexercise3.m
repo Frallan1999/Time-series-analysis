@@ -15,12 +15,12 @@ addpath('../functions', '../data')     % Add this line to update the path (Hanna
 % Simulate N samples of a process to test our code
 N = 1000;
 A_sim = [1 -1.79 0.84];
-e = randn(N,1);
+e = 0.1*randn(N,1);
 y = filter(A_sim, 1, e); % y is our simulated data (tested via pzmap that we got the poles in the right places)
 
 % Define the state space equations
 A = eye(2);
-Re = [0 0; 0 0]; % State covariance matrix (We suspect zero values for parameters that don't change over time)
+Re = [1e-6 0; 0 1e-6]; % State covariance matrix (We suspect zero values for parameters that don't change over time)
 Rw = 0; % Observation variance, we think 0 for simulated data
 
 % Set some initial values
@@ -121,7 +121,6 @@ plot(lambda_line,ls2) %The best lambda will have the lowest ls2 value
 minlambda = lambda_line(minindex)
 
 %% 2.2 Kalman filtering of time series
-
 clc; 
 close all;
 
@@ -149,7 +148,7 @@ yt2 = zeros(1,N); % Two step prediction
 % the y values for t-3. We also stop at N - 2 as we don't have the true
 % y-values for e.g. N + 1. 
 
-for t=3:N-2
+for t=3:N %Note that we're not using N-2 here. Why? 
     Ct = [-y(t-1) -y(t-2)]; % C_{t | t-1}
     yhat(t) = Ct * xt_t1; % y_t{t | t-1}
     ehat(t) = y(t) - yhat(t); % e_t = y_t - y_{t | t-1}
@@ -174,3 +173,67 @@ plot(Xsave')
 subplot(212);
 plot(thx);
 
+%% 2.3 Using Kalman filter for 2-step prediction
+clc; 
+close all;
+
+% Simulating data
+rng(0);
+N = 10000;
+ee = 0.1*randn(N,1);
+A0 = [1 -0.8 0.2];
+y = filter(1, A0, ee);
+
+A = eye(2);
+Re = [1e-6 0; 0 1e-6];
+Rw = 1;
+
+% Set some initial values
+xt_t1 = [0 0]'; % Initial state values: m0, expected value of x1 (WE CHANGED FROM xtt_1)
+Rxx_1 = 10 * eye(2); % Initial state variance: Var X1, large V0 --> small trust in initial values
+
+% Vectors to store values in
+Xsave = zeros(2,N); % Stored states: For an AR(2) we have two hidden states, a1 and a2
+ehat = zeros(1,N); % Prediction residual
+yt1 = zeros(1,N); % One step prediction
+yt2 = zeros(1,N); % Two step prediction
+
+% The filter uses data up to time t-1 to predict value at t, then update
+% using the prediction error. We start from t = 3, because we don't have
+% the y values for t-3. We also stop at N - 2 as we don't have the true
+% y-values for e.g. N + 1. 
+
+for t=3:N-2 %Why N-2 and not -1?
+    Ct = [-y(t-1) -y(t-2)]; % C_{t | t-1}
+    yhat(t) = Ct * xt_t1; % y_t{t | t-1}
+    ehat(t) = y(t) - yhat(t); % e_t = y_t - y_{t | t-1}
+
+    % Update
+    Ryy = Ct * Rxx_1 * Ct' + Rw; % R^{yy}_{t | t-1}
+    Kt = Rxx_1 * Ct' / Ryy; % K_t = Rxx{t| t-1} * Ct' * Ryy{t | t-1}
+    xt_t = xt_t1 + Kt*ehat(t); %x_{t | t}
+    Rxx = Rxx_1 - Kt * Ct * Rxx_1; % R^{xx}_{t | t}
+
+    % Predict the next state
+    xt_t1 = A * xt_t; % x_{t+1 | t}, don't forget to add B and U if needed
+    Rxx_1 = A * Rxx * A' + Re; % R^{xx}_{t+1 | t}
+
+    % Form 2-step prediction
+    Ct1 = [-y(t) -y(t-1)]; % C_{t+1 | t}
+    yt1(t+1) = Ct1 * xt_t; % y_{t+1 | t} = C_{t+1|t} x_{t|t}, %this holds as 
+    % x_t is assumed to be constant over time, 
+    % i.e. the parameters are not changing in this case
+
+    Ct2 = [-y(t+1) -y(t)]; %C_{t+2 | t}
+    yt2(t+2) = Ct2 * xt_t; % y_{t+2|t} = C_{t+2|t} x_{t|t}
+    
+    Xsave(:,t) = xt_t;
+
+end
+
+plot(y(end-100-2:end-2))
+hold on
+plot(yt1(end-100-1:end-1),'g')
+plot(yt2(end-100:end),'r')
+hold off
+legend('y', 'k=1', 'k=2')
