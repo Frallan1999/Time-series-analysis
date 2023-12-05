@@ -8,7 +8,7 @@ close all;
 % addpath('functions', '/data')     % Add this line to update the path
 addpath('../functions', '../data')     % Add this line to update the path (Hanna)
 
-%% Prep 1
+%% Prep 1 - Kalman
 
 % The Kalman filter
 
@@ -57,7 +57,7 @@ for t=3:N-2
 
 end
 
-%% Prep 2
+%% Prep 2 - Markov chain
 clc;
 close all;
 
@@ -297,5 +297,73 @@ ehat2 = y(3:end)' - yt2(1:end-2);
 ehat1_sumsq = sum(ehat1(end-200:end).^2)
 ehat2_sumsq = sum(ehat2(end-200:end).^2)
 
-%% 2.4 Quality control of a process
+%% 2.4 Quality control of a process - simulate the process
+
+% Initial values
+b = 20;
+sigma2e = 1;
+sigma2v = 4;
+N = 5000;
+rng(0);
+
+% Simulate x as an AR(1)
+e = sqrt(sigma2e)*randn(N,1);
+A = [1 -1];
+x = filter(1, A, e);
+
+% Simulate y = x + bu + v
+v = sqrt(sigma2v)*randn(N,1);
+y = zeros(N,1);
+
+for t = 1:N
+    y(t) = x(t) + b*u(t) + v(t);
+end
+
+%% 2.4 Continued, find x and b
+
+% Define the state space equations.
+A = eye(2);
+Re = [1e-2 0; 0 1e-2];
+Rw = 1; 
+
+% Set some initial values
+xt_t1 = [0 15]'; % Initial state values
+Rxx_1 = 10 * eye(2); % Initial state variance: Var X1, large V0 --> small trust in initial values
+
+% Vectors to store values in
+Xsave = zeros(2,N); % Stored states: For an AR(2) we have two hidden states, a1 and a2
+ehat = zeros(1,N); % Prediction residual
+
+for t=2:N
+    Ct = [1 u(t)]; % C_{t | t-1}
+    yhat(t) = Ct * xt_t1; % y_t{t | t-1} SHOULD WE INCORPORATE Vt?
+    ehat(t) = y(t) - yhat(t); % e_t = y_t - y_{t | t-1}
+
+    % Update
+    Ryy = Ct * Rxx_1 * Ct' + Rw; % R^{yy}_{t | t-1}
+    Kt = Rxx_1 * Ct' / Ryy; % K_t = Rxx{t| t-1} * Ct' * Ryy{t | t-1}
+    xt_t = xt_t1 + Kt*ehat(t); %x_{t | t}
+    Rxx = Rxx_1 - Kt * Ct * Rxx_1; % R^{xx}_{t | t}
+
+    % Predict the next state
+    xt_t1 = A * xt_t; % x_{t+1 | t}, don't forget to add B and U if needed
+    Rxx_1 = A * Rxx * A' + Re; % R^{xx}_{t+1 | t}
+    
+    Xsave(:,t) = xt_t;
+
+end
+
+figure(1);
+subplot(211);
+plot(Xsave')
+subplot(212);
+plot(x);
+yline(b);
+
+%% 2.5 Recursive temperature modelling 
+close all;
+clc;
+clear;
+
+load svedala94.mat
 
