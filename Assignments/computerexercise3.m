@@ -466,10 +466,8 @@ close all;
 
 t = (1:length(y_m))';
 U = [sin(2*pi*t/6) cos(2*pi*t/6)];
-% U = [sin(2*pi*t/6)];
 Z = iddata(y_m,U);          % Data object of the data and the sinusoidal signal (input and data)
-model = [3 [1 1] 4 [0 0]];  
-% model = [3 [1] 4 [0]];   
+model = [3 [1 1] 4 [0 0]];    
        % [na [nb1 nb2] nc [nk1 nk2]];     
        % nb is coefficent before input signal (here cosinus and sinus)
        % nk is the shift (in this calse zero) 
@@ -480,7 +478,6 @@ thx = armax(Z,model);
 hold on
 plot(y_m)
 plot(U.*cell2mat(thx.b)) % Plotting the seasonal function
-% plot(U.*thx.b) % Plotting the seasonal function
 axis tight
 hold off 
 
@@ -488,7 +485,7 @@ hold off
 close all; 
 
 U = [sin(2*pi*t/6) cos(2*pi*t/6) ones(size(t))]; % the ones are for removing the mean 
-Z = iddata(y_m, U);   % data and input data
+Z = iddata(y_m, U);   % Y OR YM??? (Y_M FITS BETTER BUT Y MAKES MORE SENSE) 
 m0 = [thx.A(2:end) cell2mat(thx.B) 0 thx.C(2:end)];  % is the 0 for adding one more input? 
 Re = diag([0 0 0 0 0 1 0 0 0 0]); % only time dependent coefficient is the mean,
                                  % if lth diagonal index of Re is non-zero, 
