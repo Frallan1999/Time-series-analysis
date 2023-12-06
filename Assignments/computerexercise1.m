@@ -301,7 +301,7 @@ basicPlot(z, m, "after removal of trend")
 %% ALT 1: 
 % Start by removing sesason (differentiation) 
 A24 = [1 zeros(1,23) -1];
-z_s = filter(A24, 1, z);            % filter on seasonality 12
+z_s = filter(A24, 1, z);            % filter on seasonality 24
 z_s = z_s(length(A24):end);
 z_data = iddata(z_s);
 figure()

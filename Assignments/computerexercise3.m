@@ -360,10 +360,35 @@ subplot(212);
 plot(x);
 yline(b);
 
-%% 2.5 Recursive temperature modelling 
+%% 2.5.1 Recursive temperature modelling - Plot the data
 close all;
 clc;
 clear;
 
 load svedala94.mat
+
+% Plot the data
+figure(1)
+y = svedala94;
+T = linspace(datenum(1994,1,1),datenum(1994,12,31), length(svedala94)); % Get months on x-axis
+plot(T,y);
+datetick('x');
+title('Raw data')
+
+%% 2.5.1 Recursive temperature modelling - Differentiate
+
+% Remove seasonality
+D = [1 zeros(1,5) -1];
+y_d = filter(D, 1, y); % Differentiate temperature with nabla 6
+y_d = y_d(length(D):end); % Remove initial samples
+T = linspace(datenum(1994,1,1),datenum(1994,12,31),length(y_d)); % Get months for x-axis
+
+%Plot the data
+figure(2)
+plot(T,y_d)
+datetick('x');
+title('Differentiated data')
+
+%% 2.5.2 Recursive temperature modelling - Fit ARMA
+
 

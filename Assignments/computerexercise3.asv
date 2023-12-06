@@ -366,4 +366,21 @@ clc;
 clear;
 
 load svedala94.mat
+y = svedala94;
+T = linspace (datenum ( 1 9 9 4 , 1 , 1 ) , datenum ( 1 9 9 4 , 1 2 , 3 1 ) , . . .
+length ( s v e d al a 9 4 ) ) ;
+p lot (T, s v e d al a 9 4 ) ;
+d a t e t i c k ( ’ x ’ ) ;
 
+figure(1)
+plot(y) % Plot the data
+title('Raw data')
+
+
+D = [1 zeros(1,4) -1];
+y_d = filter(D, 1, y); % Differentiate temperature with nabla 6
+y_d = y_d(length(D):end); % Remove initial samples
+
+figure(2)
+plot(y_d)
+title('Differentiated data')
