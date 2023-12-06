@@ -443,7 +443,7 @@ hold off
 % was not that good of a model (high FPE)
 % Yes th_winter and th_summer seem to be different proceess
 
-%% 2.6.1 Recursive temperature modeling, ARMAX
+%% 2.6 Recursive temperature modeling, ARMAX
 clear; 
 close all; 
 
@@ -488,13 +488,56 @@ hold off
 close all; 
 
 U = [sin(2*pi*t/6) cos(2*pi*t/6) ones(size(t))]; % the ones are for removing the mean 
-Z = iddata(y, U);   % data and input data
-m0 = [thx.A(2:end) thx.B' 0 thx.C(2:end)];  % is the 0 for adding one more input? 
-Re = diag[] % only time dependent coefficient is the mean,
-            % if lth diagonal index of Re is non-zero, it is assumed to vary over time, otherwise not.
+Z = iddata(y_m, U);   % data and input data
+m0 = [thx.A(2:end) cell2mat(thx.B) 0 thx.C(2:end)];  % is the 0 for adding one more input? 
+Re = diag([0 0 0 0 0 1 0 0 0 0]); % only time dependent coefficient is the mean,
+                                 % if lth diagonal index of Re is non-zero, 
+                                 % it is assumed to vary over time, otherwise not.
+model = [3 [1 1 1] 4 0 [0 0 0] [1 1 1]];    % here nk is 1 1 1 insted of 0  as given in instructions (limitations in rpem)
+[thr, yhat] = rpem(Z, model, 'kf', Re, m0);
 
+%% 2.6.4 Construct part of the temperature that is due to the varying mean and sine/cosine signals 
+close all; 
 
+m = thr(:,6);       % our varying mean
+a = thr(end,4);     % converged value of sinuscoefficient
+b = thr(end,5);     % converged value of cosinuscoefficient
+y_mean = m + a*U(:,1)+b*U(: ,2); 
+y_mean = [0; y_mean(1:end-1)];
 
-rpem()
+hold on
+plot(y_m)
+plot(y_mean)
+hold off
 
+%% 2.6.5 Modelling using entire year
+clear;
+close all; 
+load svedala94.mat;
+y = svedala94; 
+y = y-y(1);
 
+% Remove seasonality (from 2.5)
+% D = [1 zeros(1,5) -1];
+% y_d = filter(D, 1, y); % Differentiate temperature with nabla 6
+% y_d = y_d(length(D):end); % Remove initial samples
+
+% Initial model (to get starting values, now constant mean) 
+t = (1:length(y))';
+U = [sin(2*pi*t/6) cos(2*pi*t/6)];
+Z = iddata(y_m,U);          % Data object of the data and the sinusoidal signal (input and data)
+model = [3 [1 1] 4 [0 0]];  
+% model = [3 [1] 4 [0]];   
+       % [na [nb1 nb2] nc [nk1 nk2]];     
+       % nb is coefficent before input signal (here cosinus and sinus)
+       % nk is the shift (in this calse zero) 
+
+% Estimate the coefficients for the sines and cosines 
+thx = armax(Z,model);
+
+hold on
+plot(y_m)
+plot(U.*cell2mat(thx.b)) % Plotting the seasonal function
+% plot(U.*thx.b) % Plotting the seasonal function
+axis tight
+hold off 

@@ -510,15 +510,37 @@ plot(y_m)
 plot(y_mean)
 hold off
 
-%% 2.6.4 Study data entire year
+%% 2.6.5 Modelling using entire year
+clear;
+close all; 
+load svedala94.mat;
 y = svedala94; 
 y = y-y(1);
 
-U = [sin(2*pi*/6) cos(2*pi*t/6) ones(size(y))]; % the ones are for removing the mean 
+% Remove seasonality (from 2.5)
+% D = [1 zeros(1,5) -1];
+% y_d = filter(D, 1, y); % Differentiate temperature with nabla 6
+% y_d = y_d(length(D):end); % Remove initial samples
+
+%% 2.6.5 Create Initial model (to get starting values, now constant mean) 
+t = (1:length(y))';
+U = [sin(2*pi*t/6) cos(2*pi*t/6)];
+Z = iddata(y,U);          % Data object of the data and the sinusoidal signal (input and data)
+model = [3 [1 1] 4 [0 0]];  
+
+thx = armax(Z,model);     % Estimate the coefficients for the sines and cosines 
+
+hold on
+plot(y)
+plot(U.*cell2mat(thx.b))  % Plotting the seasonal function
+axis tight
+hold off  
+
+%% 2.6.5 Varying the mean 
+close all;
+
+U = [sin(2*pi*t/6) cos(2*pi*t/6) ones(size(t))]; % the ones are for removing the mean 
 Z = iddata(y, U);   % data and input data
 m0 = [thx.A(2:end) cell2mat(thx.B) 0 thx.C(2:end)];  % is the 0 for adding one more input? 
-Re = diag([0 0 0 0 0 1 0 0 0 0]); % only time dependent coefficient is the mean,
-                                 % if lth diagonal index of Re is non-zero, 
-                                 % it is assumed to vary over time, otherwise not.
-model = [3 [1 1 1] 4 0 [0 0 0] [1 1 1]];    % here nk is 1 1 1 insted of 0  as given in instructions (limitations in rpem)
+Re = diag([0 0 0 0 0 1 0 0 0 0]); 
 [thr, yhat] = rpem(Z, model, 'kf', Re, m0);
