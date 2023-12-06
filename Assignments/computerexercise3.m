@@ -1,6 +1,6 @@
 %
 % Time series analysis
-% Computer exercise 3  
+% Computer exercise 3  X
 %
 %
 clear; 
@@ -536,11 +536,26 @@ plot(U.*cell2mat(thx.b))  % Plotting the seasonal function
 axis tight
 hold off  
 
-%% 2.6.5 Varying the mean 
+%% 2.6.5 Kalman filtering for varying the mean 
 close all;
-
+t = (1:length(y))';     % as above
 U = [sin(2*pi*t/6) cos(2*pi*t/6) ones(size(t))]; % the ones are for removing the mean 
 Z = iddata(y, U);   % data and input data
 m0 = [thx.A(2:end) cell2mat(thx.B) 0 thx.C(2:end)];  % is the 0 for adding one more input? 
 Re = diag([0 0 0 0 0 1 0 0 0 0]); 
+model = [3 [1 1 1] 4 0 [0 0 0] [1 1 1]];    % here nk is 1 1 1 insted of 0  as given in instructions (limitations in rpem)
 [thr, yhat] = rpem(Z, model, 'kf', Re, m0);
+
+%% 2.6.5 Construct part of the temperature that is due to the varying mean and sine/cosine signals 
+close all; 
+
+m = thr(:,6);       % our varying mean
+a = thr(end,4);     % converged value of sinuscoefficient
+b = thr(end,5);     % converged value of cosinuscoefficient
+y_mean = m + a*U(:,1)+b*U(: ,2); 
+y_mean = [0; y_mean(1:end-1)];
+
+hold on
+plot(y)
+plot(y_mean)
+hold off

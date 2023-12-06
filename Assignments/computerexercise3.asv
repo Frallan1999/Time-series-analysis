@@ -522,22 +522,25 @@ y = y-y(1);
 % y_d = filter(D, 1, y); % Differentiate temperature with nabla 6
 % y_d = y_d(length(D):end); % Remove initial samples
 
-% Initial model (to get starting values, now constant mean) 
+%% 2.6.5 Create Initial model (to get starting values, now constant mean) 
 t = (1:length(y))';
 U = [sin(2*pi*t/6) cos(2*pi*t/6)];
-Z = iddata(y_m,U);          % Data object of the data and the sinusoidal signal (input and data)
+Z = iddata(y,U);          % Data object of the data and the sinusoidal signal (input and data)
 model = [3 [1 1] 4 [0 0]];  
-% model = [3 [1] 4 [0]];   
-       % [na [nb1 nb2] nc [nk1 nk2]];     
-       % nb is coefficent before input signal (here cosinus and sinus)
-       % nk is the shift (in this calse zero) 
 
-% Estimate the coefficients for the sines and cosines 
-thx = armax(Z,model);
+thx = armax(Z,model);     % Estimate the coefficients for the sines and cosines 
 
 hold on
-plot(y_m)
-plot(U.*cell2mat(thx.b)) % Plotting the seasonal function
-% plot(U.*thx.b) % Plotting the seasonal function
+plot(y)
+plot(U.*cell2mat(thx.b))  % Plotting the seasonal function
 axis tight
-hold off 
+hold off  
+
+%% 2.6.5 Kalman filtering for varying the mean 
+close all;
+t = (1:length(y))';     % as above
+U = [sin(2*pi*t/6) cos(2*pi*t/6) ones(size(t))]; % the ones are for removing the mean 
+Z = iddata(y, U);   % data and input data
+m0 = [thx.A(2:end) cell2mat(thx.B) 0 thx.C(2:end)];  % is the 0 for adding one more input? 
+Re = diag([0 0 0 0 0 1 0 0 0 0]); 
+[thr, yhat] = rpem(Z, model, 'kf', Re, m0);
