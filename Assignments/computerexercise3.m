@@ -360,7 +360,7 @@ subplot(212);
 plot(x);
 yline(b);
 
-%% 2.5.1 Recursive temperature modelling - Plot the data
+%% 2.5 Recursive temperature modelling - Plot the data
 close all;
 clc;
 clear;
@@ -370,12 +370,16 @@ load svedala94.mat
 % Plot the data
 figure(1)
 y = svedala94;
-T = linspace(datenum(1994,1,1),datenum(1994,12,31), length(svedala94)); % Get months on x-axis
-plot(T,y);
+plot(y)
+figure(2)
+y = svedala94;
+T1 = linspace(datenum(1994,1,1),datenum(1994,12,31), length(svedala94)); % Get months on x-axis
+plot(T1,y);
 datetick('x');
 title('Raw data')
 
 %% 2.5.1 Recursive temperature modelling - Differentiate
+close all; 
 
 % Remove seasonality
 D = [1 zeros(1,5) -1];
@@ -390,5 +394,131 @@ datetick('x');
 title('Differentiated data')
 
 %% 2.5.2 Recursive temperature modelling - Fit ARMA
+close all; 
 
+% Fit ARMA(2,2) Do this for (i) entire year, (ii) January to March, (iii) June to August 
+th = armax(y_d ,[2 2]);
+th_winter = armax( y_d(1:540) ,[2 2]);
+th_summer = armax( y_d(907:1458) ,[2 2]);
 
+present(th)
+present(th_winter)
+present(th_summer) % Ma(2) not significant, much higher FPE
+
+%% 2.5.3 recursiveARMA
+
+% Polynomials from 2.5.2 
+X = recursiveARMA([2 2]);
+X.InitialA = [1 th_winter.A(2:end)];        % Use the parameters from winter as initial guess
+X.InitialC = [1 th_winter.C(2:end)];        % Use the parameters from winter as initial guess
+X.ForgettingFactor = 0.99;
+for k=1:length( y_d )
+    [Aest(k,:) ,Cest(k,:) ,yhat(k)] = step( X, y_d(k) );
+end
+
+subplot 311
+plot(T1, svedala94 );
+datetick( 'x')
+subplot 312
+plot(Aest(: ,2:3))
+hold on
+plot(repmat(th_winter.A(2:end),[length(y_d) 1]),'g:'); 
+plot(repmat(th_summer.A(2:end),[length(y_d) 1]),'r:'); 
+axis tight
+title('A est')
+hold off
+subplot 313 
+plot(Cest(:,2:3))
+hold on
+plot(repmat(th_winter.C(2:end),[length(y_d) 1]),'g:'); 
+plot(repmat(th_summer.C(2:end),[length(y_d) 1]),'r:'); 
+axis tight
+title('C est')
+hold off
+
+% Does it converge to the same values as 
+% A polynomial close to summer polynomial during months and converges to
+% winter polynomial in the end
+% C polynomial is not as good during summer months - makes sense as this
+% was not that good of a model (high FPE)
+% Yes th_winter and th_summer seem to be different proceess
+
+%% 2.6 Recursive temperature modeling, ARMAX
+clear; 
+close all; 
+
+% Looking at one part of data and removing the (constant) mean 
+load svedala94
+y = svedala94(850:1100);
+figure(1)
+plot(y)
+axis tight
+y_m = y - mean(y);
+figure(2)
+plot(y_m)
+axis tight
+
+%% 2.6.2 Signusoidal input ARMAX
+close all;
+% Instead of differentiation will use sinusoidal signal as input. 
+% since the phase of the oscillation is unknown, we will use a combination 
+% of a sine and a cosine signals.
+
+t = (1:length(y_m))';
+U = [sin(2*pi*t/6) cos(2*pi*t/6)];
+% U = [sin(2*pi*t/6)];
+Z = iddata(y_m,U);          % Data object of the data and the sinusoidal signal (input and data)
+model = [3 [1 1] 4 [0 0]];  
+% model = [3 [1] 4 [0]];   
+       % [na [nb1 nb2] nc [nk1 nk2]];     
+       % nb is coefficent before input signal (here cosinus and sinus)
+       % nk is the shift (in this calse zero) 
+
+% Estimate the coefficients for the sines and cosines 
+thx = armax(Z,model);
+
+hold on
+plot(y_m)
+plot(U.*cell2mat(thx.b)) % Plotting the seasonal function
+% plot(U.*thx.b) % Plotting the seasonal function
+axis tight
+hold off 
+
+%% 2.6.3 Varying mean - Signusoidal input ARMAX
+close all; 
+
+U = [sin(2*pi*t/6) cos(2*pi*t/6) ones(size(t))]; % the ones are for removing the mean 
+Z = iddata(y_m, U);   % data and input data
+m0 = [thx.A(2:end) cell2mat(thx.B) 0 thx.C(2:end)];  % is the 0 for adding one more input? 
+Re = diag([0 0 0 0 0 1 0 0 0 0]); % only time dependent coefficient is the mean,
+                                 % if lth diagonal index of Re is non-zero, 
+                                 % it is assumed to vary over time, otherwise not.
+model = [3 [1 1 1] 4 0 [0 0 0] [1 1 1]];    % here nk is 1 1 1 insted of 0  as given in instructions (limitations in rpem)
+[thr, yhat] = rpem(Z, model, 'kf', Re, m0);
+
+%% 2.6.4 Construct part of the temperature that is due to the varying mean and sine/cosine signals 
+close all; 
+
+m = thr(:,6);       % our varying mean
+a = thr(end,4);     % converged value of sinuscoefficient
+b = thr(end,5);     % converged value of cosinuscoefficient
+y_mean = m + a*U(:,1)+b*U(: ,2); 
+y_mean = [0; y_mean(1:end-1)];
+
+hold on
+plot(y_m)
+plot(y_mean)
+hold off
+
+%% 2.6.4 Study data entire year
+y = svedala94; 
+y = y-y(1);
+
+U = [sin(2*pi*/6) cos(2*pi*t/6) ones(size(y))]; % the ones are for removing the mean 
+Z = iddata(y, U);   % data and input data
+m0 = [thx.A(2:end) cell2mat(thx.B) 0 thx.C(2:end)];  % is the 0 for adding one more input? 
+Re = diag([0 0 0 0 0 1 0 0 0 0]); % only time dependent coefficient is the mean,
+                                 % if lth diagonal index of Re is non-zero, 
+                                 % it is assumed to vary over time, otherwise not.
+model = [3 [1 1 1] 4 0 [0 0 0] [1 1 1]];    % here nk is 1 1 1 insted of 0  as given in instructions (limitations in rpem)
+[thr, yhat] = rpem(Z, model, 'kf', Re, m0);
