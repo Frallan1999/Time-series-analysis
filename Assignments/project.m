@@ -16,11 +16,12 @@ load proj23.mat
 
 %% 2.1: Studying the rain (org) data for El-Geneina
 close all; 
-% We start by plotting the rain_org data 
+
+% We start by plotting the rain_org data
 nbrLags = 50;
 figure(1)
 plot(ElGeneina.rain_org_t, ElGeneina.rain_org)
-basicPlot(ElGeneina.rain_org, nbrLags, 'ElGeneina.rain_org')
+
 
 % we see that the data is not at all gaussian, maybe it would be nice to
 % log it? BUT, we have 0 values in the data, so first we need to add a
