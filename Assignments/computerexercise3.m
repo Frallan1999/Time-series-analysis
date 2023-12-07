@@ -126,7 +126,7 @@ close all;
 
 
 X = recursiveAR(2); %Already implemented algorithm recursive AR
-X.ForgettingFactor = 1; %Setting values for parts of the algo, lambda here
+X.ForgettingFactor = 0.9; %Setting values for parts of the algo, lambda here
 X.InitialA = [1 0 0]; %Initial values of A here
 
 for kk=1:length(tar2)
@@ -323,7 +323,7 @@ end
 
 % Define the state space equations.
 A = eye(2);
-Re = [1e-2 0; 0 1e-2];
+Re = [1e-2 0; 0 0];
 Rw = 1; 
 
 % Set some initial values
