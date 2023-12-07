@@ -324,7 +324,7 @@ end
 
 % Define the state space equations.
 A = eye(2);
-Re = [1e-2 0; 0 0];
+Re = [1e-2 0; 0 1e-2];
 Rw = 1; 
 
 % Set some initial values
