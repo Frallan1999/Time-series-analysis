@@ -29,4 +29,11 @@ basicPlot(ElGeneina.rain_org, nbrLags, 'ElGeneina.rain_org')
 
 %% (3)
 
-
+figure(1)
+histogram(ElGeneina.rain_org)
+figure(2)
+histogram(log(ElGeneina.rain_org))
+figure(3)
+histogram(log(ElGeneina.rain_org)-log(mean(ElGeneina.rain_org)))
+%figure(4)
+%histogram(sqrt(ElGeneina.rain_org)-sqrt(mean(ElGeneina.rain_org)))
