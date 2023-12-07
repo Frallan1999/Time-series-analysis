@@ -5,26 +5,24 @@
 %
 clear; 
 close all;
-% addpath('functions', '/data')     % Add this line to update the path
-addpath('../functions', '../data')     % Add this line to update the path (Hanna)
+% addpath('functions', '/data')         % Add this line to update the path
+addpath('../functions', '../data')      % Add this line to update the path (Hanna)
 %% 1. Introduction to the data
 clear
 close all
 clc
 
 load proj23.mat
-
-
 %% 2.1: Studying the rain (org) data for El-Geneina
 close all; 
 
-% Redefining data 
+% Saving data in new variables
 rain_org = ElGeneina.rain_org;
 rain_org_t = ElGeneina.rain_org_t;
 rain = ElGeneina.rain;
 rain_t = ElGeneina.rain_t;
 
-% We start by plotting the rain_org data
+% We start with normal analyzis of the rain_org data
 nbrLags = 50;
 figure(1)
 plot(rain_org_t, rain_org)
@@ -59,7 +57,11 @@ checkIfNormal(log_rain_org, 'ElGeneina rain_org')
 % It is still not Gaussian, but we look away and say yey 
 %% 2.1: Studying the rain (org) data for El-Geneina
 % We now want continue to model our rain as an AR(1) and reconstruct the rain
-% using a Kalman filter. 
+% using a Kalman filter.
+
+% Now that we are done with transforming the data, lets define it as y for
+% simplicity 
+y = log_rain_org;
 
 % Define the state space equations.
 a1 = 2;
@@ -73,12 +75,12 @@ Rxx_1 = 10 * eye(3);                            % Initial state variance: large 
 
 % Vectors to store values in
 N = length(log_rain_org);
-Xsave = zeros(2,N);                             % Stored states: For an AR(2) we have two hidden states, a1 and a2
-ehat = zeros(1,N);                              % Prediction residual
+Xsave = zeros(3,N);                             % Stored states: We have three hidden states (a1 is assumed known)
+ehat = zeros(3,N);                              % Prediction residual (??? is this right) 
 
 for t=1:N
-    Ct = [1 u(t)]; % C_{t | t-1}
-    yhat(t) = Ct * xt_t1; % y_t{t | t-1} SHOULD WE INCORPORATE Vt?
+    Ct = [1 1 1]; % C_{t | t-1}
+    yhat(t) = Ct * xt_t1; % y_t{t | t-1} 
     ehat(t) = y(t) - yhat(t); % e_t = y_t - y_{t | t-1}
 
     % Update
@@ -92,25 +94,14 @@ for t=1:N
     Rxx_1 = A * Rxx * A' + Re; % R^{xx}_{t+1 | t}
     
     Xsave(:,t) = xt_t;
-
 end
 
 figure(1);
 subplot(211);
 plot(Xsave')
 subplot(212);
-plot(x);
+plot(rain);
 yline(b);
-
-
-
-
-
-
-
-
-
-
 
 %% DO??? We want the mean to be zero
 log_rain_org_m  = log_rain_org - mean(log_rain_org);
