@@ -42,7 +42,6 @@ fprintf('The Box-Cox curve is maximized at %4.2f. This suggests that a log-trans
 figure
 normplot( data )
 
-
 %% Lets transform the data. 
 logData = log( data );
 
