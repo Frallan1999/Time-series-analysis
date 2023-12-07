@@ -55,7 +55,7 @@ plot(rain_org_t, log_rain_org)
 checkIfNormal(log_rain_org, 'ElGeneina rain_org')
 
 % It is still not Gaussian, but we look away and say yey 
-%% %% DO??? We want the mean to be zero
+%% DO??? We want the mean to be zero
 log_rain_org  = log_rain_org - mean(log_rain_org);
 
 % Plotting the log_rain_org data
@@ -128,9 +128,39 @@ plot(Xsave(1,:)')
 subplot(212);
 plot(log_rain_org)
 
-%%
-plot(rain);
-yline(b);
+%% 
+
+% Define the state space equations.
+a1 = -1;
+A = a1*eye(3);     
+Re = [1e-6 0 0; 0 1e-6  0; 0 0 1e-6];           % try different values
+Rw = 1;                                         % try different values
+
+for t=3:N                                       % We use t-2, so start at t=3.
+    % Update the predicted state and the time-varying state vector.
+    x_t1 = A*xt(:,t-1);                         % x_{t|t-1} = A x_{t-1|t-1}
+    C    = [1 1 1];    
+    
+    % Update the parameter estimates.
+    Ry = C*Rxx_1*C' + Rw;                       % R_{t|t-1}^{y,y} = C R_{t|t-1}^{x,x} + Rw
+    Kt = Rx_t1*C'/Ry;                           % K_t = R^{x,x}_{t|t-1} C^T inv( R_{t|t-1}^{y,y} )
+    yhat(t) = C*x_t1;                           % One-step prediction, \hat{y}_{t|t-1}.
+
+    % If a sample is missing, just retain the earlier state.
+    if isnan( y(t) )
+        xt(:,t) = x_t1;                         % x_{t|t} = x_{t|t-1} 
+        Rx_t    = Rx_t1;                        % R^{x,x}_{t|t} = R^{x,x}_{t|t-1} 
+        y1(t)   = yhat(t);                      % Replace the missing sample with the estimated value. 
+    else
+        h_et(t) = y(t)-yhat(t);                 % One-step prediction error, \hat{e}_t = y_t - \hat{y}_{t|t-1}
+        xt(:,t) = x_t1 + Kt*( h_et(t) );        % x_{t|t} = x_{t|t-1} + K_t ( y_t -  \hat{y}_{t|t-1} ) 
+        Rx_t    = Rx_t1 - Kt*Ry*Kt';            % R^{x,x}_{t|t} = R^{x,x}_{t|t-1} - K_t R_{t|t-1}^{y,y} K_t^T
+    end
+    Rx_t1 = A*Rx_t*A' + Re;                     % R^{x,x}_{t+1|t} = A R^{x,x}_{t|t} A^T + Re
+
+    % Estimate a one std confidence interval of the estimated parameters.
+    xStd(:,t) = sqrt( diag(Rx_t) );
+end
 
 %% DO??? We want the mean to be zero
 log_rain_org_m  = log_rain_org - mean(log_rain_org);
