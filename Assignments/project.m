@@ -58,9 +58,49 @@ checkIfNormal(log_rain_org, 'ElGeneina rain_org')
 
 % It is still not Gaussian, but we look away and say yey 
 %% 2.1: Studying the rain (org) data for El-Geneina
-% We now continue to model our rain as an AR(1) and reconstruct the rain
-% using a Kalman filter 
+% We now want continue to model our rain as an AR(1) and reconstruct the rain
+% using a Kalman filter. 
 
+% Define the state space equations.
+a1 = 2;
+A = a1*eye(3);     
+Re = [zeros(1,3); zeros(1,3); zeros(1,3)];      % try different values
+Rw = 1;                                         % try different values
+
+% Set some initial values
+xt_t1 = [0 0 0]';                               % Initial state values for rain denser time scale
+Rxx_1 = 10 * eye(3);                            % Initial state variance: large V0 --> small trust in initial values
+
+% Vectors to store values in
+N = length(log_rain_org);
+Xsave = zeros(2,N);                             % Stored states: For an AR(2) we have two hidden states, a1 and a2
+ehat = zeros(1,N);                              % Prediction residual
+
+for t=1:N
+    Ct = [1 u(t)]; % C_{t | t-1}
+    yhat(t) = Ct * xt_t1; % y_t{t | t-1} SHOULD WE INCORPORATE Vt?
+    ehat(t) = y(t) - yhat(t); % e_t = y_t - y_{t | t-1}
+
+    % Update
+    Ryy = Ct * Rxx_1 * Ct' + Rw; % R^{yy}_{t | t-1}
+    Kt = Rxx_1 * Ct' / Ryy; % K_t = Rxx{t| t-1} * Ct' * Ryy{t | t-1}
+    xt_t = xt_t1 + Kt*ehat(t); %x_{t | t}
+    Rxx = Rxx_1 - Kt * Ct * Rxx_1; % R^{xx}_{t | t}
+
+    % Predict the next state
+    xt_t1 = A * xt_t; % x_{t+1 | t}, don't forget to add B and U if needed
+    Rxx_1 = A * Rxx * A' + Re; % R^{xx}_{t+1 | t}
+    
+    Xsave(:,t) = xt_t;
+
+end
+
+figure(1);
+subplot(211);
+plot(Xsave')
+subplot(212);
+plot(x);
+yline(b);
 
 
 
