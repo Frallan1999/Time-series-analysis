@@ -55,18 +55,43 @@ plot(rain_org_t, log_rain_org)
 checkIfNormal(log_rain_org, 'ElGeneina rain_org')
 
 % It is still not Gaussian, but we look away and say yey 
+%% %% DO??? We want the mean to be zero
+log_rain_org  = log_rain_org - mean(log_rain_org);
+
+% Plotting the log_rain_org data
+nbrLags = 50;
+figure(3)
+plot(rain_org_t, log_rain_org)
+checkIfNormal(log_rain_org, 'ElGeneina rain_org')
+
 %% 2.1: Studying the rain (org) data for El-Geneina
 % We now want continue to model our rain as an AR(1) and reconstruct the rain
-% using a Kalman filter.
+% using a Kalman filter. To get an idea of what the a parameter in the
+% AR(1) process could be, we start by trying to model our log_rain_org as an
+% AR(1) to get an idea
+close all; 
 
+% We do a basic plot
+basicPlot(log_rain_org, nbrLags, 'log rain org')
+% See a lot of seasonality in ACF, disregard this and try to model as AR(1)
+
+model_init = idpoly([1 0], [], []);
+data = iddata(log_rain_org);
+model_ar = pem(data, model_init);
+present(model_ar)
+res = myFilter(model_ar.c, model_ar.a, log_rain_org);
+basicPlot(res, nbrLags, 'res');
+ 
+
+%% 
 % Now that we are done with transforming the data, lets define it as y for
 % simplicity 
 y = log_rain_org;
 
 % Define the state space equations.
-a1 = 2;
+a1 = -1;
 A = a1*eye(3);     
-Re = [zeros(1,3); zeros(1,3); zeros(1,3)];      % try different values
+Re = [1e-6 0 0; 0 1e-6  0; 0 0 1e-6];           % try different values
 Rw = 1;                                         % try different values
 
 % Set some initial values
@@ -79,27 +104,31 @@ Xsave = zeros(3,N);                             % Stored states: We have three h
 ehat = zeros(3,N);                              % Prediction residual (??? is this right) 
 
 for t=1:N
-    Ct = [1 1 1]; % C_{t | t-1}
-    yhat(t) = Ct * xt_t1; % y_t{t | t-1} 
-    ehat(t) = y(t) - yhat(t); % e_t = y_t - y_{t | t-1}
+    Ct = [1 1 1];                               % C_{t | t-1}
+    yhat(t) = Ct * xt_t1;                       % y_t{t | t-1} 
+    ehat(t) = y(t) - yhat(t);                   % e_t = y_t - y_{t | t-1}
 
     % Update
-    Ryy = Ct * Rxx_1 * Ct' + Rw; % R^{yy}_{t | t-1}
-    Kt = Rxx_1 * Ct' / Ryy; % K_t = Rxx{t| t-1} * Ct' * Ryy{t | t-1}
-    xt_t = xt_t1 + Kt*ehat(t); %x_{t | t}
-    Rxx = Rxx_1 - Kt * Ct * Rxx_1; % R^{xx}_{t | t}
+    Ryy = Ct * Rxx_1 * Ct' + Rw;                % R^{yy}_{t | t-1}
+    Kt = Rxx_1 * Ct' / Ryy;                     % K_t = Rxx{t| t-1} * Ct' * Ryy{t | t-1}
+    xt_t = xt_t1 + Kt*ehat(t);                  % x_{t | t}
+    Rxx = Rxx_1 - Kt * Ct * Rxx_1;              % R^{xx}_{t | t}
 
     % Predict the next state
-    xt_t1 = A * xt_t; % x_{t+1 | t}, don't forget to add B and U if needed
-    Rxx_1 = A * Rxx * A' + Re; % R^{xx}_{t+1 | t}
-    
+    xt_t1 = A * xt_t;                           % x_{t+1 | t} this is our AR(1) process 
+    Rxx_1 = A * Rxx * A' + Re;                  % R^{xx}_{t+1 | t}
+       
     Xsave(:,t) = xt_t;
 end
 
+%%
 figure(1);
 subplot(211);
-plot(Xsave')
+plot(Xsave(1,:)')
 subplot(212);
+plot(log_rain_org)
+
+%%
 plot(rain);
 yline(b);
 

@@ -20,8 +20,8 @@ y = filter(A_sim, 1, e); % y is our simulated data (tested via pzmap that we got
 
 % Define the state space equations
 A = eye(2);
-Re = [1e-6 0; 0 1e-6]; % State covariance matrix (We suspect zero values for parameters that don't change over time)
-Rw = 0; % Observation variance, we think 0 for simulated data
+Re = [1e-6 0; 0 1e-6];      % State covariance matrix (We suspect zero values for parameters that don't change over time)
+Rw = 1;                     % Observation variance, we think 0 for simulated data
 
 % Set some initial values
 xt_t1 = [0 0]'; % Initial state values: m0, expected value of x1 (WE CHANGED FROM xtt_1)
@@ -179,7 +179,7 @@ y = tar2;
 % Define the state space equations
 A = eye(2);
 Re = [0.004 0; 0 0]; % State covariance matrix (zero values for parameters that don't change over time)
-Rw = 1.25; % Observation variance, we think 0 for simulated data
+Rw = 1; % Observation variance, we think 0 for simulated data
 
 % Set some initial values
 xt_t1 = [0 0]'; % Initial state values: m0, expected value of x1 (WE CHANGED FROM xtt_1)

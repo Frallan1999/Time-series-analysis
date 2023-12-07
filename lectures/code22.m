@@ -43,6 +43,7 @@ h_et  = zeros(N,1);                             % Estimated one-step prediction 
 xt    = zeros(p0+q0,N);                         % Estimated states. Intial state, x_{1|0} = 0.
 yhat  = zeros(N,1);                             % Estimated output.
 xStd  = zeros(p0+q0,N);                         % Stores one std for the one-step prediction.
+
 for t=4:N                                       % We use t-3, so start at t=4.
     % Update the predicted state and the time-varying state vector.
     x_t1 = A*xt(:,t-1);                         % x_{t|t-1} = A x_{t-1|t-1}
