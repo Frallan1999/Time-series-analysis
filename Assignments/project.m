@@ -7,7 +7,7 @@ clear;
 close all;
 % addpath('functions', '/data')     % Add this line to update the path
 addpath('../functions', '../data')     % Add this line to update the path (Hanna)
-%% Understanding the data
+%% 1. Understanding the data
 clear
 close all
 clc
@@ -16,17 +16,32 @@ load proj23.mat
 
 %% 2.1: Studying the rain (org) data for El-Geneina
 close all; 
-% We start by plotting the rain_org data
+% We start by plotting the rain_org data 
 nbrLags = 50;
+figure(1)
 plot(ElGeneina.rain_org_t, ElGeneina.rain_org)
 basicPlot(ElGeneina.rain_org, nbrLags, 'ElGeneina.rain_org')
 
-% It does not seem like AR(1) would be the best fit, but as that is the
-% task, we start by modelling the data as an AR(1)
+% we see that the data is not at all gaussian, maybe it would be nice to
+% log it? BUT, we have 0 values in the data, so first we need to add a
+% contant to the data. 
+
+constant = 10;
+
+%% test
+close all; 
 
 
+log_data = log(ElGeneina.rain_org);
+new_data = zeros(length(log_data),1);
+for t=1:length(new_data)
+    if log_data(t) == -inf 
+        new_data(t) = 0;
+    else 
+        new_data(t) = log_data(t);
+    end
+end
 
-
-%% (3)
-
+plot(new_data)
+basicPlot(new_data, nbrLags, 'Log ElGeneina.rain_org')
 
