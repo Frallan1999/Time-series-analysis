@@ -14,8 +14,19 @@ clc
 
 load proj23.mat
 
-%% (A)
+%% 2.1: Studying the rain (org) data for El-Geneina
+close all; 
+% We start by plotting the rain_org data
+nbrLags = 50;
+plot(ElGeneina.rain_org_t, ElGeneina.rain_org)
+basicPlot(ElGeneina.rain_org, nbrLags, 'ElGeneina.rain_org')
 
-%% (B)
+% It does not seem like AR(1) would be the best fit, but as that is the
+% task, we start by modelling the data as an AR(1)
+
+
+
+
+%% (3)
 
 
