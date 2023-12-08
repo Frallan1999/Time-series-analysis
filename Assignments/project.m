@@ -82,7 +82,7 @@ model_ar = pem(data, model_init);
 present(model_ar)
 res = myFilter(model_ar.c, model_ar.a, log_rain_org);
 basicPlot(res, nbrLags, 'res');
-<<<<<<< HEAD
+
 %% 2.1.3: Kalman reconstruction
 % Now that we are done with transforming the data and have found an 
 % inital estimate for a1, lets go ahead with a Kalman reconstruction. 
@@ -134,7 +134,8 @@ for T=1:length(Xsave(1,:))
 
 end
 
-%% Plotting the results
+%% 2.1.3: Kalman reconstruction
+% Plotting the results
 figure(1);
 subplot(311);
 plot(rain_t, rain_kalman)
@@ -143,8 +144,8 @@ plot(rain_org_t, log_rain_org)
 subplot(313);
 plot(rain_t, log(rain+constant))
 
-sum(rain_kalman(rain_kalman>0))   % not removed mean
-sum(log_rain_org)                 % not removed mean
+sum(rain_kalman(rain_kalman>0))                 % relevant if not removed mean 
+sum(log_rain_org)                               % relevant if not removed mean
 
 %% KLADD! Do we like negative rain? NO -> one option is to put to zero, other to move up? 
 % here lets try putting it to zero :) 
