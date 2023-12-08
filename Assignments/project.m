@@ -50,7 +50,7 @@ rain_org_c = rain_org + constant;
 log_rain_org = log(rain_org_c);
 
 % Plotting the log_rain_org data
-nbrLags = 50
+nbrLags = 50;
 figure(1)
 plot(rain_org_t, log_rain_org)
 checkIfNormal(log_rain_org, 'ElGeneina rain_org')
@@ -89,11 +89,10 @@ basicPlot(res, nbrLags, 'res');
 close all;
 y = log_rain_org;                               % Redefine the data as y for simplicity 
 
-
 % Define the state space equations.
 a1 = 0.9;
 A = [a1 0 0; 1 0 0; 0 1 0];    
-Re = [1e-2 0 0; 0 1e-6  0; 0 0 1e-2];           % try different values
+Re = [1e-2 0 0; 1e-6 0 0; 0 1e-6 0];           % try different values
 Rw = 0.5;                                       % try different values
 
 % Set some initial values
@@ -152,26 +151,30 @@ sum(log_rain_org)                               % relevant if not removed mean
 
 N1 = 3*N;
 extraN = 100;
-x_sim = zeros(N1+extraN,1);
 A1 = [1 -a1]; 
 e = randn(N1+extraN,1); 
 x_sim = filter(1, A1, e); x_sim = x_sim(extraN+1:end);
+
+for i = 1:N1
+    if(x_sim(i)<0) 
+        x_sim(i) = 0;
+    end
+end
 
 y_sim = zeros(N,1);
 v = randn(N,1);
 
 for i = 1:N
-    y_sim(i) = log(x_sim(3*N) + x_sim(3*N-1) + x_sim(3*N-2) + v(i));
+    y_sim(i) = x_sim(3*i) + x_sim(3*i-1) + x_sim(3*i-2) + v(i);
 end
 
-plot(y_sim)
+%% Plot simulation vs reality
 
+figure(1)
+plot(rain_kalman)
+figure(2)
+plot(x_sim)
 
-
-
-
-
-
-
-
-
+sum(rain_kalman)
+sum(x_sim)
+sum(v)
