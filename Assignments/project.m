@@ -92,6 +92,7 @@ basicPlot(res, nbrLags, 'res');
 % inital estimate for a1, lets go ahead with a Kalman reconstruction. 
 close all;
 y = log_rain_org;                               % Redefine the data as y for simplicity 
+% y = rain_org
 
 % Define the state space equations.
 a1 = 0.9;
