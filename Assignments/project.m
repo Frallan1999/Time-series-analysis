@@ -22,7 +22,7 @@ rain_org_t = ElGeneina.rain_org_t;
 rain = ElGeneina.rain;
 rain_t = ElGeneina.rain_t;
 
-% We start with normal analyzis of the rain_org data
+%% 2.1.1: Gaussian analysis of original rain data
 nbrLags = 50;
 figure(1)
 plot(rain_org_t, rain_org)
@@ -37,8 +37,8 @@ checkIfNormal(rain_org, 'ElGeneina rain org')
 % Looking at the Normal probability plot. The rain_org data does not look gaussian at all.
 % Looking at the BJ curve we see a maximization close to zeo -> suggesting
 % a log transform might be helpful
-%% 2.1: Studying the rain (org) data for El-Geneina
-% Adding constant, log transforming the data, and removing the mean 
+%% 2.1.1: Gaussian analysis of original rain data
+% Adding constant and log transforming the data
 close all; 
 
 % Adding constant to data 
@@ -55,7 +55,8 @@ plot(rain_org_t, log_rain_org)
 checkIfNormal(log_rain_org, 'ElGeneina rain_org')
 
 % It is still not Gaussian, but we look away and say yey 
-%% Set mean to zero
+%% 2.1.1: Gaussian analysis of original rain data
+% Removing the mean 
 log_rain_org_m  = log_rain_org - mean(log_rain_org);
 
 % Plotting the log_rain_org data
@@ -63,9 +64,9 @@ nbrLags = 50;
 figure(3)
 plot(rain_org_t, log_rain_org_m)
 checkIfNormal(log_rain_org_m, 'ElGeneina rain_org')
-
-%% 2.1: Studying the rain (org) data for El-Geneina
-% We now want continue to model our rain as an AR(1) and reconstruct the rain
+ 
+%% 2.1.2: Finding a reasonable initial a1
+% We want to model our rain as an AR(1) and reconstruct the rain
 % using a Kalman filter. To get an idea of what the a parameter in the
 % AR(1) process could be, we start by trying to model our log_rain_org as an
 % AR(1) to get an idea
@@ -81,9 +82,7 @@ model_ar = pem(data, model_init);
 present(model_ar)
 res = myFilter(model_ar.c, model_ar.a, log_rain_org);
 basicPlot(res, nbrLags, 'res');
- 
-
-%% 
+%% 2.1.3: Kalman reconstruction
 % Now that we are done with transforming the data, lets define it as y for
 % simplicity 
 close all;
