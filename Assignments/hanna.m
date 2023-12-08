@@ -83,7 +83,7 @@ y = log_rain_org;
 
 
 % Define the state space equations.
-a1 = -2.1;              % wouldnt this entail non stationary - 2.1 not removing mean
+a1 = 2.1;              % wouldnt this entail non stationary - 2.1 not removing mean
 A = [ 1/3*a1 1/3*a1^2 1/3*a1^3; 0 1/2*a1 1/2*a1^2; 0 0 a1];
 
 Re = [1e-6 0 0; 0 1e-6  0; 0 0 1e-6];           % try different values
@@ -116,6 +116,7 @@ for t=1:N
     Xsave(:,t) = xt_t;
 end
 
+% Is this then 2 steps into the future?
 
 % We would like to store this in an vector as in the interpolated case 
 rain_kalman = zeros(length(Xsave(1,:))*length(Xsave(:,1)),1);
@@ -159,11 +160,20 @@ end
 
 figure(1);
 subplot(311);
+hold on
 plot(rain_t, rain_kalman_pos)
+scatter(rain_t, rain_kalman_pos)
+hold off
 subplot(312);
+hold on
 plot(rain_org_t, log_rain_org)
+scatter(rain_org_t, log_rain_org)
+hold off
 subplot(313);
+hold on
 plot(rain_t, log(rain+constant))
+scatter(rain_t, log_rain)
+hold off
 
 sum(rain_kalman_pos)
 sum(log_rain_org)
