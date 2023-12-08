@@ -88,11 +88,11 @@ basicPlot(res, nbrLags, 'res');
 % simplicity 
 close all;
 
-y = log_rain_org_m;
+y = log_rain_org;
 
 % Define the state space equations.
-a1 = 0.8;
-A = a1*eye(3);     
+a1 = 0.9;
+A = [a1 0 0; 1 0 0; 0 1 0];    
 Re = [1e-2 0 0; 0 1e-6  0; 0 0 1e-2];           % try different values
 Rw = 0.5;                                         % try different values
 
@@ -134,20 +134,7 @@ for T=1:length(Xsave(1,:))
 
 end
 
-%% Does the sum add up? 
-
-y_fake = zeros(length(Xsave),1);
-for i = 1:length(Xsave)
-    y_fake(i) = sum(Xsave(:,i));
-end
-
-figure(1)
-plot(y_fake)
-figure(2)
-plot(log_rain_org)
-
-
-%%
+%% 
 figure(1);
 subplot(311);
 plot(rain_t, rain_kalman)
@@ -191,15 +178,6 @@ hold off
 
 sum(rain_kalman_pos)
 sum(log_rain_org)
-
-%% DO??? We want the mean to be zero
-log_rain_org_m  = log_rain_org - mean(log_rain_org);
-
-% Plotting the log_rain_org data
-nbrLags = 50;
-figure(3)
-plot(rain_org_t, log_rain_org_m)
-checkIfNormal(log_rain_org_m, 'ElGeneina rain_org')
 
 %%
 close all; 
