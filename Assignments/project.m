@@ -89,10 +89,10 @@ basicPlot(res, nbrLags, 'res');
 y = log_rain_org;
 
 % Define the state space equations.
-a1 = 0.8; % Should be positive
+a1 = -1;
 A = a1*eye(3);     
-Re = [1e-2 0 0; 0 1e-2  0; 0 0 1e-2];           % try different values
-Rw = 0.3;                                         % try different values
+Re = [1e-6 0 0; 0 1e-6  0; 0 0 1e-6];           % try different values
+Rw = 1;                                         % try different values
 
 % Set some initial values
 xt_t1 = [0 0 0]';                               % Initial state values for rain denser time scale
@@ -121,46 +121,61 @@ for t=1:N
     Xsave(:,t) = xt_t;
 end
 
+% We would like to store this in an vector as in the interpolated case 
+rain_kalman = zeros(length(Xsave(1,:))*length(Xsave(:,1)),1);
+k = 1; 
+for T=1:length(Xsave(1,:))
+    for t=1:length(Xsave(:,1))
+        rain_kalman(k) = Xsave(t,T);
+        k = k+1; 
+    end
+
+end
+
 %%
 figure(1);
-subplot(211);
-plot(Xsave(1,:)')
-subplot(212);
-plot(log_rain_org)
+subplot(311);
+plot(rain_t, rain_kalman)
+subplot(312);
+plot(rain_org_t, log_rain_org)
+subplot(313);
+plot(rain_t, log(rain+constant))
 
-%% 
+sum(rain_kalman(rain_kalman>0))   % not removed mean
+sum(log_rain_org)                 % not removed mean
 
-% Define the state space equations.
-a1 = -1;
-A = a1*eye(3);     
-Re = [1e-6 0 0; 0 1e-6  0; 0 0 1e-6];           % try different values
-Rw = 1;                                         % try different values
+%% Do we like negative rain? NO -> one option is to put to zero, other to move up? 
+% here lets try putting it to zero :) 
+close all;
 
-for t=3:N                                       % We use t-2, so start at t=3.
-    % Update the predicted state and the time-varying state vector.
-    x_t1 = A*xt(:,t-1);                         % x_{t|t-1} = A x_{t-1|t-1}
-    C    = [1 1 1];    
-    
-    % Update the parameter estimates.
-    Ry = C*Rxx_1*C' + Rw;                       % R_{t|t-1}^{y,y} = C R_{t|t-1}^{x,x} + Rw
-    Kt = Rx_t1*C'/Ry;                           % K_t = R^{x,x}_{t|t-1} C^T inv( R_{t|t-1}^{y,y} )
-    yhat(t) = C*x_t1;                           % One-step prediction, \hat{y}_{t|t-1}.
-
-    % If a sample is missing, just retain the earlier state.
-    if isnan( y(t) )
-        xt(:,t) = x_t1;                         % x_{t|t} = x_{t|t-1} 
-        Rx_t    = Rx_t1;                        % R^{x,x}_{t|t} = R^{x,x}_{t|t-1} 
-        y1(t)   = yhat(t);                      % Replace the missing sample with the estimated value. 
-    else
-        h_et(t) = y(t)-yhat(t);                 % One-step prediction error, \hat{e}_t = y_t - \hat{y}_{t|t-1}
-        xt(:,t) = x_t1 + Kt*( h_et(t) );        % x_{t|t} = x_{t|t-1} + K_t ( y_t -  \hat{y}_{t|t-1} ) 
-        Rx_t    = Rx_t1 - Kt*Ry*Kt';            % R^{x,x}_{t|t} = R^{x,x}_{t|t-1} - K_t R_{t|t-1}^{y,y} K_t^T
+rain_kalman_pos = zeros(length(rain_kalman),1)
+for t=1:length(rain_kalman_pos)
+    if rain_kalman(t) < 0
+        rain_kalman_pos(t) = 0;
+    else 
+        rain_kalman_pos(t) = rain_kalman(t);
     end
-    Rx_t1 = A*Rx_t*A' + Re;                     % R^{x,x}_{t+1|t} = A R^{x,x}_{t|t} A^T + Re
-
-    % Estimate a one std confidence interval of the estimated parameters.
-    xStd(:,t) = sqrt( diag(Rx_t) );
 end
+
+figure(1);
+subplot(311);
+hold on
+plot(rain_t, rain_kalman_pos)
+scatter(rain_t, rain_kalman_pos)
+hold off
+subplot(312);
+hold on
+plot(rain_org_t, log_rain_org)
+scatter(rain_org_t, log_rain_org)
+hold off
+subplot(313);
+hold on
+plot(rain_t, log(rain+constant))
+scatter(rain_t, log_rain)
+hold off
+
+sum(rain_kalman_pos)
+sum(log_rain_org)
 
 %% DO??? We want the mean to be zero
 log_rain_org_m  = log_rain_org - mean(log_rain_org);
