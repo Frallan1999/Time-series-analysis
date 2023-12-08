@@ -13,7 +13,7 @@ close all
 clc
 
 load proj23.mat
-%% 2.1: Studying the rain (org) data for El-Geneina
+%% 2.1.1 Studying the rain (org) data for El-Geneina - Plotting the data
 close all; 
 
 % Saving data in new variables
@@ -37,8 +37,13 @@ checkIfNormal(rain_org, 'ElGeneina rain org')
 % Looking at the Normal probability plot. The rain_org data does not look gaussian at all.
 % Looking at the BJ curve we see a maximization close to zeo -> suggesting
 % a log transform might be helpful
+<<<<<<< HEAD
 %% 2.1.1: Gaussian analysis of original rain data
 % Adding constant and log transforming the data
+=======
+%% 2.1.1 Studying the rain (org) data for El-Geneina - Log transform to make it more Gaussian
+% Adding constant, log transforming the data, and removing the mean 
+>>>>>>> d75159aed5c6eb7d5068ca06116779ab550a8ca1
 close all; 
 
 % Adding constant to data 
@@ -55,8 +60,12 @@ plot(rain_org_t, log_rain_org)
 checkIfNormal(log_rain_org, 'ElGeneina rain_org')
 
 % It is still not Gaussian, but we look away and say yey 
+<<<<<<< HEAD
 %% 2.1.1: Gaussian analysis of original rain data
 % Removing the mean 
+=======
+%% 2.1.1 Studying the rain (org) data for El-Geneina - Zero-mean
+>>>>>>> d75159aed5c6eb7d5068ca06116779ab550a8ca1
 log_rain_org_m  = log_rain_org - mean(log_rain_org);
 
 % Plotting the log_rain_org data
@@ -64,9 +73,15 @@ nbrLags = 50;
 figure(3)
 plot(rain_org_t, log_rain_org_m)
 checkIfNormal(log_rain_org_m, 'ElGeneina rain_org')
+<<<<<<< HEAD
  
 %% 2.1.2: Finding a reasonable initial a1
 % We want to model our rain as an AR(1) and reconstruct the rain
+=======
+
+%% 2.1.1 Studying the rain (org) data for El-Geneina - Starting values for Kalman filter
+% We now want continue to model our rain as an AR(1) and reconstruct the rain
+>>>>>>> d75159aed5c6eb7d5068ca06116779ab550a8ca1
 % using a Kalman filter. To get an idea of what the a parameter in the
 % AR(1) process could be, we start by trying to model our log_rain_org as an
 % AR(1) to get an idea
@@ -82,7 +97,13 @@ model_ar = pem(data, model_init);
 present(model_ar)
 res = myFilter(model_ar.c, model_ar.a, log_rain_org);
 basicPlot(res, nbrLags, 'res');
+<<<<<<< HEAD
 %% 2.1.3: Kalman reconstruction
+=======
+ 
+
+%% 2.1.2 Kalman filter to find hidden states
+>>>>>>> d75159aed5c6eb7d5068ca06116779ab550a8ca1
 % Now that we are done with transforming the data, lets define it as y for
 % simplicity 
 close all;
@@ -133,7 +154,7 @@ for T=1:length(Xsave(1,:))
 
 end
 
-%% 
+%% Plotting the results
 figure(1);
 subplot(311);
 plot(rain_t, rain_kalman)
@@ -149,7 +170,7 @@ sum(log_rain_org)                 % not removed mean
 % here lets try putting it to zero :) 
 close all;
 
-rain_kalman_pos = zeros(length(rain_kalman),1)
+rain_kalman_pos = zeros(length(rain_kalman),1);
 for t=1:length(rain_kalman_pos)
     if rain_kalman(t) < 0
         rain_kalman_pos(t) = 0;
@@ -177,21 +198,4 @@ hold off
 
 sum(rain_kalman_pos)
 sum(log_rain_org)
-
-%%
-close all; 
-
-
-log_data = log(ElGeneina.rain_org);
-new_data = zeros(length(log_data),1);
-for t=1:length(new_data)
-    if log_data(t) == -inf 
-        new_data(t) = 0;
-    else 
-        new_data(t) = log_data(t);
-    end
-end
-
-plot(new_data)
-basicPlot(new_data, nbrLags, 'Log ElGeneina.rain_org')
 
