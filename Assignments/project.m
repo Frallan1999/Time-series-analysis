@@ -89,10 +89,10 @@ basicPlot(res, nbrLags, 'res');
 y = log_rain_org;
 
 % Define the state space equations.
-a1 = -1;
+a1 = 0.8; % Should be positive
 A = a1*eye(3);     
-Re = [1e-6 0 0; 0 1e-6  0; 0 0 1e-6];           % try different values
-Rw = 1;                                         % try different values
+Re = [1e-2 0 0; 0 1e-2  0; 0 0 1e-2];           % try different values
+Rw = 0.3;                                         % try different values
 
 % Set some initial values
 xt_t1 = [0 0 0]';                               % Initial state values for rain denser time scale
