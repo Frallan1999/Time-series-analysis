@@ -55,14 +55,14 @@ plot(rain_org_t, log_rain_org)
 checkIfNormal(log_rain_org, 'ElGeneina rain_org')
 
 % It is still not Gaussian, but we look away and say yey 
-%% DO??? We want the mean to be zero
-log_rain_org  = log_rain_org - mean(log_rain_org);
+%% Set mean to zero
+log_rain_org_m  = log_rain_org - mean(log_rain_org);
 
 % Plotting the log_rain_org data
 nbrLags = 50;
 figure(3)
-plot(rain_org_t, log_rain_org)
-checkIfNormal(log_rain_org, 'ElGeneina rain_org')
+plot(rain_org_t, log_rain_org_m)
+checkIfNormal(log_rain_org_m, 'ElGeneina rain_org')
 
 %% 2.1: Studying the rain (org) data for El-Geneina
 % We now want continue to model our rain as an AR(1) and reconstruct the rain
@@ -86,13 +86,15 @@ basicPlot(res, nbrLags, 'res');
 %% 
 % Now that we are done with transforming the data, lets define it as y for
 % simplicity 
-y = log_rain_org;
+close all;
+
+y = log_rain_org_m;
 
 % Define the state space equations.
-a1 = -1;
+a1 = 0.8;
 A = a1*eye(3);     
-Re = [1e-6 0 0; 0 1e-6  0; 0 0 1e-6];           % try different values
-Rw = 1;                                         % try different values
+Re = [1e-2 0 0; 0 1e-6  0; 0 0 1e-2];           % try different values
+Rw = 0.5;                                         % try different values
 
 % Set some initial values
 xt_t1 = [0 0 0]';                               % Initial state values for rain denser time scale
@@ -131,6 +133,19 @@ for T=1:length(Xsave(1,:))
     end
 
 end
+
+%% Does the sum add up? 
+
+y_fake = zeros(length(Xsave),1);
+for i = 1:length(Xsave)
+    y_fake(i) = sum(Xsave(:,i));
+end
+
+figure(1)
+plot(y_fake)
+figure(2)
+plot(log_rain_org)
+
 
 %%
 figure(1);
