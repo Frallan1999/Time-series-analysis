@@ -30,3 +30,36 @@ figure(1)
 plot(y_fake)
 figure(2)
 plot(log_rain_org
+
+%% KLADD! Do we like negative rain? NO -> one option is to put to zero, other to move up? 
+% here lets try putting it to zero :) 
+close all;
+
+rain_kalman_pos = zeros(length(rain_kalman),1);
+for t=1:length(rain_kalman_pos)
+    if rain_kalman(t) < 0
+        rain_kalman_pos(t) = 0;
+    else 
+        rain_kalman_pos(t) = rain_kalman(t);
+    end
+end
+
+figure(1);
+subplot(311);
+hold on
+plot(rain_t, rain_kalman_pos)
+scatter(rain_t, rain_kalman_pos)
+hold off
+subplot(312);
+hold on
+plot(rain_org_t, log_rain_org)
+scatter(rain_org_t, log_rain_org)
+hold off
+subplot(313);
+hold on
+plot(rain_t, log(rain+constant))
+scatter(rain_t, log_rain)
+hold off
+
+sum(rain_kalman_pos)
+sum(log_rain_org)

@@ -147,36 +147,31 @@ plot(rain_t, log(rain+constant))
 sum(rain_kalman(rain_kalman>0))                 % relevant if not removed mean 
 sum(log_rain_org)                               % relevant if not removed mean
 
-%% KLADD! Do we like negative rain? NO -> one option is to put to zero, other to move up? 
-% here lets try putting it to zero :) 
-close all;
+%% 2.1.3: Kalman reconstruction - Simulating data to test the filter
+% Generate the hidden states x_t+1 = a1 * x_t + et
 
-rain_kalman_pos = zeros(length(rain_kalman),1);
-for t=1:length(rain_kalman_pos)
-    if rain_kalman(t) < 0
-        rain_kalman_pos(t) = 0;
-    else 
-        rain_kalman_pos(t) = rain_kalman(t);
-    end
+N1 = 3*N;
+extraN = 100;
+x_sim = zeros(N1+extraN,1);
+A1 = [1 -a1]; 
+e = randn(N1+extraN,1); 
+x_sim = filter(1, A1, e); x_sim = x_sim(extraN+1:end);
+
+y_sim = zeros(N,1);
+v = randn(N,1);
+
+for i = 1:N
+    y_sim(i) = log(x_sim(3*N) + x_sim(3*N-1) + x_sim(3*N-2) + v(i));
 end
 
-figure(1);
-subplot(311);
-hold on
-plot(rain_t, rain_kalman_pos)
-scatter(rain_t, rain_kalman_pos)
-hold off
-subplot(312);
-hold on
-plot(rain_org_t, log_rain_org)
-scatter(rain_org_t, log_rain_org)
-hold off
-subplot(313);
-hold on
-plot(rain_t, log(rain+constant))
-scatter(rain_t, log_rain)
-hold off
+plot(y_sim)
 
-sum(rain_kalman_pos)
-sum(log_rain_org)
+
+
+
+
+
+
+
+
 
