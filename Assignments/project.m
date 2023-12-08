@@ -23,16 +23,20 @@ rain = ElGeneina.rain;
 rain_t = ElGeneina.rain_t;
 
 %% 2.1.1: Gaussian analysis of original rain data
+close all; 
+
 nbrLags = 50;
 figure(1)
 plot(rain_org_t, rain_org)
 title('rain org')
-figure(2)
+subplot(121)
 lambda_max = bcNormPlot(rain_org,1)
 title('Box Cox plot of rain org')
 
 fprintf('The Box-Cox curve is maximized at %4.2f. This is very close to zero, and thus suggests that a log-transform might be helpful.\n', lambda_max)
-checkIfNormal(rain_org, 'ElGeneina rain org')
+subplot(122)
+normplot(rain_org)
+checkIfNormal(rain_org, 'ElGeneina rain org');
 
 % Looking at the Normal probability plot. The rain_org data does not look gaussian at all.
 % Looking at the BJ curve we see a maximization close to zeo -> suggesting
@@ -92,7 +96,7 @@ y = log_rain_org;                               % Redefine the data as y for sim
 % Define the state space equations.
 a1 = 0.9;
 A = [a1 0 0; 1 0 0; 0 1 0];    
-Re = [1e-2 0 0; 1e-6 0 0; 0 1e-6 0];           % try different values
+Re = [1e-2 0 0; 1e-6 0 0; 0 1e-6 0];            % try different values
 Rw = 0.5;                                       % try different values
 
 % Set some initial values
@@ -107,7 +111,7 @@ ehat = zeros(3,N);                              % Prediction residual (??? is th
 for t=1:N
     Ct = [1 1 1];                               % C_{t | t-1}
     yhat(t) = Ct * xt_t1;                       % y_t{t | t-1} 
-    ehat(t) = y(t) - yhat(t);                   % e_t = y_t - y_{t | t-1}
+    ehat(t) = y(t) - yhat(t);                   % e_t = y_t - y_{t | t-1} (reffered to as y_tilde in project)
 
     % Update
     Ryy = Ct * Rxx_1 * Ct' + Rw;                % R^{yy}_{t | t-1}
