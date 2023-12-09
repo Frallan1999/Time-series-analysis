@@ -34,6 +34,7 @@ test = ElGeneina.nvdi(584:end,1);      % 10% for test
 t_t = ElGeneina.nvdi_t(584:end,1); 
 
 % Plot it
+figure(2)
 subplot(311)
 plot(m_t,model);
 title('Modeling set')
@@ -51,11 +52,11 @@ clc
 
 % Plot the ACF and TACF to see if tail-values have an impact on
 % distribution - is this wrong interpretation?
-noLags = 50;
+nbrLags = 50;
 figure(2)
-acf(model, noLags, 0.02 ,1);
+acf(model, nbrLags, 0.02 ,1);
 hold on
-tacf(model, noLags, 0.02, 0.02 ,1);
+tacf(model, nbrLags, 0.02, 0.02 ,1);
 hold off
 title('ACF and TACF with alpha=0.02')
 
@@ -77,5 +78,7 @@ plot(m_t,m)
 
 
 %% 2. NVDI prediction without external input
+
+basicPlot(m,);
 
 %% 3. NVDI prediction with external input

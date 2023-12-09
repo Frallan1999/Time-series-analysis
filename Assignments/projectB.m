@@ -52,13 +52,20 @@ clc
 
 % Plot the ACF and TACF to see if tail-values have an impact on
 % distribution - is this wrong interpretation?
-noLags = 50;
-figure(2)
-acf(model, noLags, 0.02 ,1);
+nbrLags = 100;
+subplot(121)
+acf(model, nbrLags, 0.02 ,1);
 hold on
-tacf(model, noLags, 0.02, 0.02 ,1);
+tacf(model, nbrLags, 0.02, 0.02 ,1);
 hold off
 title('ACF and TACF with alpha=0.02')
+
+subplot(122)
+acf(model, nbrLags, 0.01 ,1);
+hold on
+tacf(model, nbrLags, 0.01, 0.01 ,1);
+hold off
+title('ACF and TACF with alpha=0.01')
 
 %% 1. Handling the data
 % Normalize the data based on model set parameters
@@ -78,5 +85,17 @@ plot(m_t,m)
 
 
 %% 2. NVDI prediction without external input
+% Start by plotting the data
+close all
+clc
+
+figure(1)
+basicPlot(m,50,'Modeling data')
+checkIfNormal(m,'Modeling set','D',0.05);
+
+% Two reflections:
+% 1. Strong season of 12 to be handled - differentiate
+% 2. PACF suggests maybe AR(1)?
+
 
 %% 3. NVDI prediction with external input
