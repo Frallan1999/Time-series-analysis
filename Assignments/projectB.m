@@ -68,10 +68,13 @@ max = max(model);
 min = min(model);
 
 m = 2*(model-min)/(max - min)-1;
+v = 2*(valid-min)/(max - min)-1;
+t = 2*(test-min)/(max - min)-1;
+
 plot(m_t,m)
 
-
 %% Create naive model 
+
 
 %% 2. NVDI prediction without external input
 
