@@ -62,6 +62,7 @@ checkIfNormal(log_rain_org, 'ElGeneina rain_org')
 % It is still not Gaussian, but we look away and say yey 
 %% 2.1.1: Gaussian analysis of original rain data
 % Removing the mean 
+close all;
 log_rain_org_m  = log_rain_org - mean(log_rain_org);
 
 % Plotting the log_rain_org data
@@ -217,6 +218,7 @@ end
 
 %% 2.1.4: Simulated data
 % Plot simulation vs reality
+close all; 
 
 figure(1)
 plot(rain_kalman)
