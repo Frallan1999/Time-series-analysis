@@ -34,6 +34,7 @@ test = ElGeneina.nvdi(584:end,1);      % 10% for test
 t_t = ElGeneina.nvdi_t(584:end,1); 
 
 % Plot it
+figure(2)
 subplot(311)
 plot(m_t,model);
 title('Modeling set')
