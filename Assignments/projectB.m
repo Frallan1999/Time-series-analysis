@@ -89,13 +89,23 @@ plot(m_t,m)
 close all
 clc
 
-figure(1)
-basicPlot(m,50,'Modeling data')
+basicPlot(m,100,'Modeling data')
 checkIfNormal(m,'Modeling set','D',0.05);
 
 % Two reflections:
 % 1. Strong season of 12 to be handled - differentiate
 % 2. PACF suggests maybe AR(1)?
+
+m_d = myFilter([1 zeros(1,35) -0.7],1,m);
+
+subplot(121)
+plot(m)
+title('Original data')
+subplot(122)
+plot(m_d)
+title('Differentiated data')
+
+basicPlot(m_d,50,'Differentiated data')
 
 
 %% 3. NVDI prediction with external input
