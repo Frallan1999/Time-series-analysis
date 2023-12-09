@@ -67,7 +67,7 @@ clc
 max = max(model);
 min = min(model);
 
-m = 2*(model-min)/(max - mmin)-1;
+m = 2*(model-mmin)/(mmax - mmin)-1;
 plot(m_t,m)
 
 

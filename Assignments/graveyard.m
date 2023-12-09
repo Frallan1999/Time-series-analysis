@@ -63,3 +63,34 @@ hold off
 
 sum(rain_kalman_pos)
 sum(log_rain_org)
+
+%% Graveyard
+% Examine if any points diverge from the distribution
+figure(2)
+%checkIfNormal(nvdi,'NVDI','D',0.05) %Observations 637, 639, 454, 201 seem to be a bit outside
+
+% Plotting the potential outliers - they are a bit outside
+figure(2)
+hold on
+plot(nvdi_t,nvdi);
+plot(nvdi_t(637),nvdi(637),'r*');
+plot(nvdi_t(639),nvdi(639),'g*');
+plot(nvdi_t(454),nvdi(454),'r*');
+plot(nvdi_t(201),nvdi(201),'g*');
+legend('data','637','639','454','201');
+hold off
+
+%% Removing the outliers and substituting them with the interpolated version
+nvdi_outlier = ElGeneina.nvdi;
+
+nvdi_outlier(637) = 1/2 * (nvdi_outlier(638) + nvdi_outlier(636));
+nvdi_outlier(639) = 1/2 * (nvdi_outlier(640) + nvdi_outlier(638));
+nvdi_outlier(454) = 1/2 * (nvdi_outlier(453) + nvdi_outlier(455));
+nvdi_outlier(201) = 1/2 * (nvdi_outlier(202) + nvdi_outlier(200));
+
+figure(3)
+plot(nvdi_t, nvdi_outlier)
+
+checkIfNormal(nvdi_outlier,'NVDI','D',0.05) %Observations 637, 639, 454, 201 seem to be a bit outside
+
+% Normalizing NVDI data as given in the assignment
