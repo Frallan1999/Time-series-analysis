@@ -7,15 +7,15 @@ clear;
 close all;
 % addpath('functions', '/data')         % Add this line to update the path
 addpath('../functions', '../data')      % Add this line to update the path (Hanna)
-%% 1. Handling the data
-% Examine data stationarity
-% Split into modelling, validation and test data
-
+%% 3. Modeling and validation for El-Geneina
 clear
 close all
 clc
 
 load proj23.mat
+%% 3.1 Dividing and cleaning of data set
+% Examine the data's stationarity
+% Split into modelling, validation and test data
 
 % Look at the data - deemed stationary!
 figure(1)
@@ -27,10 +27,10 @@ n = length(ElGeneina.nvdi);
 model = ElGeneina.nvdi(1:453,1);         % 70% for modelling
 m_t = ElGeneina.nvdi_t(1:453,1);
 
-valid = ElGeneina.nvdi(454:584,1);      % 20% for validation
+valid = ElGeneina.nvdi(454:584,1);       % 20% for validation
 v_t = ElGeneina.nvdi_t(454:584,1);
 
-test = ElGeneina.nvdi(584:end,1);      % 10% for test
+test = ElGeneina.nvdi(584:end,1);        % 10% for test
 t_t = ElGeneina.nvdi_t(584:end,1); 
 
 % Plot it
@@ -45,7 +45,7 @@ subplot(313)
 plot(t_t,test);
 title('Test set')
 
-%% 1. Handling the data 
+%% 3.1 Dividing and cleaning of data set
 % Examine outliers in modeling set - looks fine
 close all
 clc
@@ -67,7 +67,7 @@ tacf(model, nbrLags, 0.01, 0.01 ,1);
 hold off
 title('ACF and TACF with alpha=0.01')
 
-%% 1. Handling the data
+%%  3.1 Dividing and cleaning of data set
 % Normalize the data based on model set parameters
 close all
 clc
@@ -80,9 +80,6 @@ v = 2*(valid-min)/(max - min)-1;
 t = 2*(test-min)/(max - min)-1;
 
 plot(m_t,m)
-
-%% Create naive model 
-
 
 %% 2. NVDI prediction without external input
 % Start by plotting the data
@@ -109,3 +106,6 @@ basicPlot(m_d,50,'Differentiated data')
 
 
 %% 3. NVDI prediction with external input
+
+
+%% Create naive model 
