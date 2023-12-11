@@ -81,7 +81,7 @@ t = 2*(test-min_m)/(max_m - min_m)-1;
 
 plot(m_t,m)
 %%  3.2 Model B1 - NVDI prediction without external input
-% Should the data be transformed to be more Gaussian? 
+% Transformation of data? 
 close all; 
 clc; 
 
@@ -89,7 +89,7 @@ checkIfNormal(m,'modelling data')
 subplot(121)
 lambda_B1 = bcNormPlot(m)
 title('Box-Cox normality plot for modelling data')
-fprintf('The Box-Cox curve is maximized at %4.2f.\n', lambda_B1)
+fprintf(['The Box-Cox curve is maximized at %4.2f.\n'], lambda_B1)
 subplot(122)
 normplot(m)
 
@@ -97,12 +97,28 @@ normplot(m)
 constant = abs(min(m))+1;
 m_trans = 1./sqrt(m+constant);
 checkIfNormal(m_trans,'modelling data')
+figure()
 plot(m_trans)
 
-% Much better -> Lets continue with m_trans
-
+% Much better -> Lets continue with m_trans 
+v_trans = 1./sqrt(m+constant);
+t_trans = 1./sqrt(m+constant);
 %%  3.2 Model B1 - NVDI prediction without external input
+% Periodicity and model selection
+close all; 
+clc; 
 
+noLags = 50;           % max up to N/4
+plotACFnPACF(m_trans,noLags, 'model data');
+
+% Differentiate on season 36 
+A36 = [1 zeros(1,35) -0.4];                % Sets the season
+m_s = filter(A36,1,m_trans);             % Filter on seasonality 36 
+m_s = m_s(length(A36):end);              % Omit initial samples
+data = iddata(m_s);                      % Create object for estimation
+figure(2)
+plot(m_s);
+plotACFnPACF(m_s, noLags, "model data after differentiation");  
 
 %% 2. NVDI prediction without external input
 % Start by plotting the data

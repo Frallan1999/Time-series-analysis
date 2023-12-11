@@ -7,15 +7,15 @@ clear;
 close all;
 % addpath('functions', '/data')         % Add this line to update the path
 addpath('../functions', '../data')      % Add this line to update the path (Hanna)
-%% 1. Handling the data
-% Examine data stationarity
-% Split into modelling, validation and test data
-
+%% 3. Modeling and validation for El-Geneina
 clear
 close all
 clc
 
 load proj23.mat
+%% 3.1 Dividing and cleaning of data set
+% Examine the data's stationarity
+% Split into modelling, validation and test data
 
 % Look at the data - deemed stationary!
 figure(1)
@@ -27,10 +27,10 @@ n = length(ElGeneina.nvdi);
 model = ElGeneina.nvdi(1:453,1);         % 70% for modelling
 m_t = ElGeneina.nvdi_t(1:453,1);
 
-valid = ElGeneina.nvdi(454:584,1);      % 20% for validation
+valid = ElGeneina.nvdi(454:584,1);       % 20% for validation
 v_t = ElGeneina.nvdi_t(454:584,1);
 
-test = ElGeneina.nvdi(584:end,1);      % 10% for test
+test = ElGeneina.nvdi(584:end,1);        % 10% for test
 t_t = ElGeneina.nvdi_t(584:end,1); 
 
 % Plot it
@@ -45,8 +45,8 @@ subplot(313)
 plot(t_t,test);
 title('Test set')
 
-%% 1. Handling the data 
-% Examine outliers in modeling set - looks fine
+%% 3.1 Dividing and cleaning of data set
+% Examine outliers in modeling set -> looks fine
 close all
 clc
 
@@ -67,22 +67,58 @@ tacf(model, nbrLags, 0.01, 0.01 ,1);
 hold off
 title('ACF and TACF with alpha=0.01')
 
-%% 1. Handling the data
+%%  3.1 Dividing and cleaning of data set
 % Normalize the data based on model set parameters
 close all
 clc
 
-max = max(model);
-min = min(model);
+max_m = max(model);
+min_m = min(model);
 
-m = 2*(model-min)/(max - min)-1;
-v = 2*(valid-min)/(max - min)-1;
-t = 2*(test-min)/(max - min)-1;
+m = 2*(model-min_m)/(max_m - min_m)-1;
+v = 2*(valid-min_m)/(max_m - min_m)-1;
+t = 2*(test-min_m)/(max_m - min_m)-1;
 
 plot(m_t,m)
+%%  3.2 Model B1 - NVDI prediction without external input
+% Transformation of data? 
+close all; 
+clc; 
 
-%% Create naive model 
+checkIfNormal(m,'modelling data')
+subplot(121)
+lambda_B1 = bcNormPlot(m)
+title('Box-Cox normality plot for modelling data')
+fprintf(['The Box-Cox curve is maximized at %4.2f.\n'], lambda_B1)
+subplot(122)
+normplot(m)
 
+% Lets try one over the square root of the data
+constant = abs(min(m))+1;
+m_trans = 1./sqrt(m+constant);
+checkIfNormal(m_trans,'modelling data')
+figure()
+plot(m_trans)
+
+% Much better -> Lets continue with m_trans 
+v_trans = 1./sqrt(m+constant);
+t_trans = 1./sqrt(m+constant);
+%%  3.2 Model B1 - NVDI prediction without external input
+% Periodicity and model selection
+close all; 
+clc; 
+
+noLags = 100;           % max up to N/4
+plotACFnPACF(m_trans,noLags, 'model data')
+
+% Differentiate on season 36 
+A36 = [1 zeros(35) -1];                  % Sets the season
+m_s = filter(A36,1,m_trans);             % Filter on seasonality 12 
+y_s = y_s(length(A12):end);     % Omit initial samples
+data = iddata(y_s);             % Create object for estimation
+figure(1)
+plot(y_s)
+basicPlot(y_s, m, "no season");      % Basic analysis through plots  
 
 %% 2. NVDI prediction without external input
 % Start by plotting the data
@@ -96,5 +132,19 @@ checkIfNormal(m,'Modeling set','D',0.05);
 % 1. Strong season of 12 to be handled - differentiate
 % 2. PACF suggests maybe AR(1)?
 
-m_d = myFilter([1 ze-1],1, )
+m_d = myFilter([1 zeros(1,35) -0.7],1,m);
+
+subplot(121)
+plot(m)
+title('Original data')
+subplot(122)
+plot(m_d)
+title('Differentiated data')
+
+basicPlot(m_d,50,'Differentiated data')
+
+
 %% 3. NVDI prediction with external input
+
+
+%% Create naive model 
