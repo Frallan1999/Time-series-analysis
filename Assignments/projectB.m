@@ -46,7 +46,7 @@ plot(t_t,test);
 title('Test set')
 
 %% 3.1 Dividing and cleaning of data set
-% Examine outliers in modeling set - looks fine
+% Examine outliers in modeling set -> looks fine
 close all
 clc
 
@@ -89,13 +89,21 @@ checkIfNormal(m,'modelling data')
 subplot(121)
 lambda_B1 = bcNormPlot(m)
 title('Box-Cox normality plot for modelling data')
-fprintf('The Box-Cox curve is maximized at %4.2f.\n', lambda_max)
+fprintf('The Box-Cox curve is maximized at %4.2f.\n', lambda_B1)
 subplot(122)
 normplot(m)
 
-% Looking at the Normal probability plot. The rain_org data does not look gaussian at all.
-% Looking at the BJ curve we see a maximization close to zeo -> suggesting
-% a log transform might be helpful
+% Lets try one over the square root of the data
+constant = abs(min(m))+1;
+m_trans = 1./sqrt(m+constant);
+checkIfNormal(m_trans,'modelling data')
+plot(m_trans)
+
+% Much better -> Lets continue with m_trans
+
+%%  3.2 Model B1 - NVDI prediction without external input
+
+
 %% 2. NVDI prediction without external input
 % Start by plotting the data
 close all
