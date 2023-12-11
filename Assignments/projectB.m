@@ -72,14 +72,15 @@ title('ACF and TACF with alpha=0.01')
 close all
 clc
 
-max = max(model);
-min = min(model);
+max_m = max(model);
+min_m = min(model);
 
-m = 2*(model-min)/(max - min)-1;
-v = 2*(valid-min)/(max - min)-1;
-t = 2*(test-min)/(max - min)-1;
+m = 2*(model-min_m)/(max_m - min_m)-1;
+v = 2*(valid-min_m)/(max_m - min_m)-1;
+t = 2*(test-min_m)/(max_m - min_m)-1;
 
 plot(m_t,m)
+
 
 %% 2. NVDI prediction without external input
 % Start by plotting the data
