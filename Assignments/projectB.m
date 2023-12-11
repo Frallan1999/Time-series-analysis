@@ -80,8 +80,22 @@ v = 2*(valid-min_m)/(max_m - min_m)-1;
 t = 2*(test-min_m)/(max_m - min_m)-1;
 
 plot(m_t,m)
+%%  3.2 Model B1 - NVDI prediction without external input
+% Should the data be transformed to be more Gaussian? 
+close all; 
+clc; 
 
+checkIfNormal(m,'modelling data')
+subplot(121)
+lambda_B1 = bcNormPlot(m)
+title('Box-Cox normality plot for modelling data')
+fprintf('The Box-Cox curve is maximized at %4.2f.\n', lambda_max)
+subplot(122)
+normplot(m)
 
+% Looking at the Normal probability plot. The rain_org data does not look gaussian at all.
+% Looking at the BJ curve we see a maximization close to zeo -> suggesting
+% a log transform might be helpful
 %% 2. NVDI prediction without external input
 % Start by plotting the data
 close all
