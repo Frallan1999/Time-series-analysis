@@ -112,13 +112,12 @@ plot(m_log);
 v_log = log(v + constant);
 t_log = log(t + constant);
 %%  3.2 Model B1 - NVDI prediction without external input
-% Differentiation - Periodicityclose all; 
+% Differentiation of the data; 
 clc; 
-
 noLags = 50;                             % max up to N/4
 plotACFnPACF(m_log,noLags, 'model data');
 
-% Differentiate on season 36 with nabla 
+% Differentiate on season 36 with nabla (1-z^-36)
 A36 = [1 zeros(1,35) -1];                % Sets the season
 m_s = filter(A36,1,m_log);               % Filter on seasonality 36 
 m_s = m_s(length(A36):end);              % Omit initial samples
@@ -127,15 +126,23 @@ figure()
 plot(m_s);
 plotACFnPACF(m_s, noLags, "model data after differentiation with nabla36");  
 
-% Differentiate on season 36 with a36 = -0.4
+% Differentiate on season 36 with (1-0.35*z^-36)
 A36 = [1 zeros(1,35) -0.35];              % Sets the season
 m_s = filter(A36,1,m_log);             % Filter on seasonality 36 
 m_s = m_s(length(A36):end);              % Omit initial samples
 data = iddata(m_s);                      % Create object for estimation
-plotACFnPACF(m_s, noLags, "model data with a36 = ");  
+plotACFnPACF(m_s, noLags, "model data with a36 = 0.35");  
 figure()
 plot(m_s);
-%%
+
+% Now with differentiating with (1-0.35*z^-36), we want to remove the mean
+
+%%  3.2 Model B1 - NVDI prediction without external input
+% Model the data after differentiating 
+close all; 
+noLags = 50; 
+
+
 
 
 
