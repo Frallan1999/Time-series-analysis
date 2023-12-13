@@ -559,7 +559,7 @@ C = model_armax.c;
 k = 3;
 % k = 26;
 [Fk, Gk] = polydiv( C, A, k );    % solves the Diophantine equation (different for each k) 
-yhat_k = filter( Gk, C, y);    % k-step prediction, y_hat_t+k|t, 
+yhat_k = filter( Gk, C, y);       % k-step prediction, y_hat_t+k|t, 
 yhat_k = yhat_k(52:end);          % Is it length(c) + k? 
 
 error = y(52:end) - yhat_k; 

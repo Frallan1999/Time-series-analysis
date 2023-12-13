@@ -8,7 +8,59 @@ close all;
 % addpath('functions', '/data')     % Add this line to update the path
 addpath('../functions', '../data')     % Add this line to update the path (Hanna)
 
-%%
+%% TEST WITH NABLA INSTEAD
+
+% Model the data after differentiating 
+close all; 
+clc;
+noLags = 50; 
+
+% initial model - try a1, a36, c36
+A = [1 zeros(1,36)];
+C = [1 zeros(1,36)];
+data_m_diff_mean = iddata(m_diff_mean);
+
+model_init = idpoly(A, [], C);                       % Set up initial model
+model_init.Structure.a.Free = [0 1 zeros(1,34) 1];
+model_init.Structure.c.Free = [zeros(1,36) 1];
+model_ar1 = pem(data_m_diff_mean, model_init);       % Optimize variables 
+res = resid(model_ar1, data_m_diff_mean);            % Calculate residuals 
+plotACFnPACF(res.y, noLags, "Residual for AR(1) modelling");
+figure()
+present(model_ar1);
+whitenessTest(res.y);
+checkIfNormal(res.y,'Residuals for AR(1)');
+plotNTdist(res.y);
+% Looks white, but residual not normal --> can't 100 procent trust result.
+% the residual is however t-dstriuted, even wider confidence interval for
+% testing whiteness, so it is OK! 
+
+%% TEST WITH NABLA INSTEAD incorp diff
+
+% Model the data after differentiating 
+close all; 
+clc;
+noLags = 50; 
+
+% initial model - try a1, a36, c36
+A = [1 zeros(1,36)];
+C = [1];
+data_m_log = iddata(m_log);
+
+model_init = idpoly(A, [], C);                       % Set up initial model
+model_init.Structure.a.Free = [0 1 zeros(1,34) 1];
+model_ar1 = pem(data_m_log, model_init);       % Optimize variables 
+res = resid(model_ar1, data_m_log);            % Calculate residuals 
+plotACFnPACF(res.y, noLags, "Residual for AR(1) modelling");
+figure()
+present(model_ar1);
+whitenessTest(res.y);
+checkIfNormal(res.y,'Residuals for AR(1)');
+plotNTdist(res.y);
+% Looks white, but residual not normal --> can't 100 procent trust result.
+% the residual is however t-dstriuted, even wider confidence interval for
+% testing whiteness, so it is OK! 
+
 %% 2.1 (Instead of Log)  If we don't interpret lambda max as zero, test with the transformation instead
 rain_org_bc = (rain_org_c.^lambda_max - 1) / lambda_max
 

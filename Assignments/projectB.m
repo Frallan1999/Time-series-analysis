@@ -16,6 +16,7 @@ clc
 load proj23.mat
 %% 3.1 Dividing and cleaning of data set
 % Examine the data's stationarity
+
 % Split into modelling, validation and test data
 
 % Look at the data - deemed stationary!
@@ -73,12 +74,12 @@ title('ACF and TACF with alpha=0.01')
 close all
 clc
 
-max_m = max(model);
-min_m = min(model);
+max_data = 255;
+min_data = 0;
 
-m = 2*(model-min_m)/(max_m - min_m)-1;
-v = 2*(valid-min_m)/(max_m - min_m)-1;
-t = 2*(test-min_m)/(max_m - min_m)-1;
+m = 2*(model-min_data)/(max_data - min_data)-1;
+v = 2*(valid-min_data)/(max_data - min_data)-1;
+t = 2*(test-min_data)/(max_data - min_data)-1;
 
 plot(m_t,m)
 %%  3.2 Model B1 - NVDI prediction without external input
@@ -95,22 +96,20 @@ subplot(122)
 normplot(m)
 
 % Lets try with the log of the data (option 1)
-constant = abs(min(m))+1;
-m_log = log(m+constant);
+m_log = log(m);
 checkIfNormal(m_log,'modelling data');
 figure();
 plot(m_log);
 
 %Lets try one over the square root of the data (option 2)
-%constant = abs(min(m))+1;
-%m_sqrt= 1./sqrt(m+constant);
-%checkIfNormal(m_sqrt,'modelling data');
-%figure();
-%plot(m_sqrt);
+% m_sqrt= sqrt(m);
+% checkIfNormal(m_sqrt,'modelling data');
+% figure();
+% plot(m_sqrt);
 
-% Much better -> Lets continue with m_trans 
-v_log = log(v + constant);
-t_log = log(t + constant);
+% Much better -> Lets continue with m_log 
+v_log = log(v);
+t_log = log(t);
 %%  3.2 Model B1 - NVDI prediction without external input
 % Differentiation of the data; 
 clc; 
@@ -138,11 +137,13 @@ figure()
 plot(m_diff);
 
 % Remove mean of differentiated data
-m_diff_mean = m_diff - mean(m_diff);
+m_diff_mean = m_diff - mean(m_diff);            % Note! This mean will prob not be same for validation and so on 
+% m_diff_mean = m_diff;
 figure()
 plot(m_diff_mean)        
+
 %%  3.2 Model B1 - NVDI prediction without external input
-% Model the data after differentiating 
+% Model the data after differentiating the data
 close all; 
 clc;
 noLags = 50; 
@@ -169,55 +170,67 @@ plotNTdist(res.y);
 % Model data without differentiation (incorporating the season)
 close all; 
 clc; 
+
 noLags = 50; 
 
 % Remove mean of logarithmised data
-m_mean = m_log - mean(m_log);
+plot(m_log)
+% m_mean = m_log - mean(m_log); 
+% m_mean = m_log;
 
 % initial model - based on information from differentiated
-A = [1 zeros(1,36)];
+% A = [1 zeros(1,36)];
+A = [1 0];
+A = conv(A,A36);
 C = [1];
-data_m_mean = iddata(m_mean);
+data_m_log = iddata(m_log);
 model_init = idpoly(A, [], C);
 model_init.Structure.a.Free = [0 1 zeros(1,34) 1];
-model_ar36 = pem(data_m_mean, model_init);
-res = resid(model_ar36, data_m_mean);
+model_init.Structure.c.Free = [0 1 zeros(1,34) 1 1 1];
+model_ar36 = pem(data_m_log, model_init);
+res = resid(model_ar36, data_m_log);
 plotACFnPACF(res.y, noLags, "Residual for AR(1) modelling");
 figure()
 present(model_ar36);
 whitenessTest(res.y);
-checkIfNormal(res.y,'Residuals for AR(1)');
+checkIfNormal(res.y,'Residuals for AR(36)');
 plotNTdist(res.y);
 
+%%  3.2.2 Model prediction (B1) 
+close all; 
+clc; 
 
+k = 6;                  % sets number of steps prediction
 
+% Solve the Diophantine equation and create predictions
+[Fk, Gk] = polydiv(model_ar36.c, model_ar36.a, k);
+throw = max(length(Gk), length(model_ar36.c));
+yhat_k = filter(Gk, model_ar36.c, v_log);
+yhat_k = yhat_k(throw:end);
 
+% Transform prediction into original domain
+yhat_k_org = exp(yhat_k);
 
+% shiftK = round(mean(grpdelay(Gk, 1))) %THIS????
 
+error = v_log(throw:end) - yhat_k;
+error_org = v(throw:end) - yhat_k_org;  
+var(error)
+var(error_org)
 
+% New domain plot
+hold on
+plot(yhat_k);
+plot(v_log(throw:end));
+hold off
+basicPlot(error,noLags,'new')
 
-%% 2. NVDI prediction without external input
-% Start by plotting the data
-close all
-clc
-
-basicPlot(m,100,'Modeling data')
-checkIfNormal(m,'Modeling set','D',0.05);
-
-
-m_d = myFilter([1 zeros(1,35) -0.7],1,m);
-
-subplot(121)
-plot(m)
-title('Original data')
-subplot(122)
-plot(m_d)
-title('Differentiated data')
-
-basicPlot(m_d,50,'Differentiated data')
-
-
-%% 3. NVDI prediction with external input
-
+% Original domain plot
+figure()
+hold on
+plot(yhat_k_org);
+plot(v(throw:end));
+hold off
+basicPlot(error_org,noLags,'org')
 
 %% Create naive model 
