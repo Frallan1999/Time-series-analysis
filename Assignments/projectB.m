@@ -248,20 +248,30 @@ model_init.Structure.a.Free = [0 1 zeros(1,34) 1 0];
 model_init.Structure.c.Free = [zeros(1,3) 1];        % added ones C changed
 model_sarima = pem(data_m_log, model_init);
 res = resid(model_sarima, data_m_log);
-plotACFnPACF(res.y, noLags, "Residual for AR(1) modelling");
+plotACFnPACF(res.y, noLags, "Residual for SARIMA modelling");
 figure()
 present(model_sarima);
 whitenessTest(res.y);
-checkIfNormal(res.y,'Residuals for AR(36)');
+checkIfNormal(res.y,'Residuals from SARIMA modelling');
 plotNTdist(res.y);
 % FPE: 0.04658 and Monti: 8.89 < 36.42
 % A "jump" in the normplot...
 
+%% 3.2.2. Model prediction
+% Lets do a one step and save the variance
+k = 1;      % prediction step 
+
+[Fk, Gk] = polydiv(model_sarima.c, model_sarima.a, k );  
+throw = max(length(Gk), length(model_sarima.c));
+yhat_1 = filter(Gk, model_sarima.c, v_log);                             
+yhat_1 = yhat_1(throw:end);   
+yhat_1_org = exp(yhat_1);
+var_1 = var(v(throw:end) - yhat_1_org)
 
 %%  3.2.2 Model prediction (B1) 
 close all; 
 clc; 
-k = 25;                  % sets number of steps prediction
+k = 1;                  % sets number of steps prediction
 
 % Solve the Diophantine equation and create predictions
 [Fk, Gk] = polydiv(model_sarima.c, model_sarima.a, k);
@@ -274,20 +284,21 @@ yhat_k_org = exp(yhat_k);
 
 % It can be seen that the shift is IN GENERAL this (and is fun to then
 % incorporate to be able to plot for both shifted and non shifted
-if k == 1 or 
-    shift = 
+if k == 1 || k == 2
+    shift = k; 
+else 
+    shift = 3; 
+end
 
-
-
-error_shifted = v_log(throw:end-shiftK) - yhat_k(1+shiftK:end);
-error_org_shifted = v(throw:end-shiftK) - yhat_k_org(1+shiftK:end);
+% Create the errors (shifted and unshifted, original domain vs not) 
+error_shifted = v_log(throw:end-shift) - yhat_k(1+shift:end);
+error_org_shifted = v(throw:end-shift) - yhat_k_org(1+shift:end);
 error = v_log(throw:end) - yhat_k;
 error_org = v(throw:end) - yhat_k_org;
 var(error)
-var(error_org)
 var(error_shifted)
+var(error_org)
 var(error_org_shifted)
-
 
 % Original domain plot (not shifted)
 figure()
@@ -295,14 +306,20 @@ hold on
 plot(yhat_k_org,'g');
 plot(v(throw:end));
 hold off
-basicPlot(error_org,noLags,'org')
+basicPlot(error_org,noLags,'Original domain not shifted')
 
-% Original domain plot (not shifted)
+% Original domain plot (shifted)
 figure()
 hold on
-plot(yhat_k_org(1+shiftK:end),'g');
-plot(v(throw:end-shiftK));
+plot(yhat_k_org(1+shift:end),'g');
+plot(v(throw:end-shift));
 hold off
-basicPlot(error_org,noLags,'org')
+basicPlot(error_org,noLags,'Original domain')
+
+% Lets compare it to the theoretical variance
+theoretical_variance = sum(Fk.^2) * var_1
+conf = 2*sqrt(theoretical_variance);
+conf_int = [0-conf, 0+conf]
+error_outside = (sum(error_org>conf_int(2)) + sum(error_org<conf_int(1)))/length(error_org)
 
 %% Create naive model 
