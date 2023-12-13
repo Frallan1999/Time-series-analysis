@@ -267,6 +267,7 @@ yhat_1 = filter(Gk, model_sarima.c, v_log);
 yhat_1 = yhat_1(throw:end);   
 yhat_1_org = exp(yhat_1);
 var_1 = var(v(throw:end) - yhat_1_org)
+var_test= var(v_log(throw:end) - yhat_1)
 
 %%  3.2.2 Model prediction (B1) 
 close all; 
@@ -316,10 +317,33 @@ plot(v(throw:end-shift));
 hold off
 basicPlot(error_org,noLags,'Original domain')
 
-% Lets compare it to the theoretical variance
+% VETY UNSURE!!! Lets compare it to the theoretical variance (VERY UNSURE OF THIS- not
+% even normal distributed)
 theoretical_variance = sum(Fk.^2) * var_1
 conf = 2*sqrt(theoretical_variance);
 conf_int = [0-conf, 0+conf]
 error_outside = (sum(error_org>conf_int(2)) + sum(error_org<conf_int(1)))/length(error_org)
 
 %% Create naive model 
+% Lets say vegetation is the same as 1 year ago 
+close all; 
+clc; 
+
+noLags = 50; 
+
+A = [1 zeros(1,36)];
+C = [1];
+data_m_log = iddata(m_log);
+
+model_init = idpoly(A, [], C);
+model_init.Structure.a.Free = [zeros(1,36) 1];        
+model_naive = pem(data_m_log, model_init);
+res = resid(model_sarima, data_m_log);
+plotACFnPACF(res.y, noLags, "Residual for SARIMA modelling");
+figure()
+present(model_sarima);
+whitenessTest(res.y);
+checkIfNormal(res.y,'Residuals from SARIMA modelling');
+plotNTdist(res.y);
+% FPE: 0.04658 and Monti: 8.89 < 36.42
+% A "jump" in the normplot...

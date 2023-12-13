@@ -359,6 +359,7 @@ y = svedala;
 A = [ 1 -1.79 0.84 ]; 
 C = [ 1 -0.18 -0.11 ];
 
+plot(y)
 %% One step prediction 
 k = 1;      % prediction step 
 
@@ -369,7 +370,7 @@ var_1 = var(y(3:end) - yhat_1)
 
 
 %% k-step prediction using k = 3 
-k3 = 3;      % predicti
+k3 = 9;      % predicti
 
 m = 50; 
 
