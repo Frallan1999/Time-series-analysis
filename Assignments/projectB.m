@@ -82,7 +82,7 @@ t = 2*(test-min_m)/(max_m - min_m)-1;
 
 plot(m_t,m)
 %%  3.2 Model B1 - NVDI prediction without external input
-% Transformation of data? 
+% Transformation of data 
 close all; 
 clc; 
 
@@ -112,8 +112,7 @@ plot(m_log);
 v_log = log(v + constant);
 t_log = log(t + constant);
 %%  3.2 Model B1 - NVDI prediction without external input
-% Periodicity and model selection
-close all; 
+% Differentiation - Periodicityclose all; 
 clc; 
 
 noLags = 50;                             % max up to N/4
@@ -136,6 +135,11 @@ data = iddata(m_s);                      % Create object for estimation
 plotACFnPACF(m_s, noLags, "model data with a36 = ");  
 figure()
 plot(m_s);
+%%
+
+
+
+
 %%
 
 close all
