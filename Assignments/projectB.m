@@ -272,7 +272,7 @@ var_test= var(v_log(throw:end) - yhat_1)
 %%  3.2.2 Model prediction (B1) 
 close all; 
 clc; 
-k = 20;                  % sets number of steps prediction
+k = 45;                  % sets number of steps prediction
 
 % Solve the Diophantine equation and create predictions
 [Fk, Gk] = polydiv(model_sarima.c, model_sarima.a, k);
@@ -338,7 +338,8 @@ present(model_naive);
 %% Test naive model on validation data
 close all; 
 clc; 
-k = 1;                  % sets number of steps prediction
+k = 45;                  % sets number of steps prediction
+% very bad with k leess than 36!!!
 
 % Solve the Diophantine equation and create predictions
 [Fk, Gk] = polydiv(model_naive.c, model_naive.a, k);
@@ -376,9 +377,15 @@ plot(v(throw:end-shift));
 hold off
 basicPlot(error_org,noLags,'Original domain')
 
-% VETY UNSURE!!! Lets compare it to the theoretical variance (VERY UNSURE OF THIS- not
-% even normal distributed)
-theoretical_variance = sum(Fk.^2) * var_1
-conf = 2*sqrt(theoretical_variance);
-conf_int = [0-conf, 0+conf]
-error_outside = (sum(error_org>conf_int(2)) + sum(error_org<conf_int(1)))/length(error_org)
+%% VER2 of NAIVE 
+close all; 
+yhat_k = filter(model_naive.a, model_naive.c, v);
+yhat_k = yhat_k(length(model_naive.a):end)
+error_org = v(length(model_naive.a):end) - yhat_k;
+
+figure()
+hold on
+plot(yhat_k,'g');
+plot(v(length(model_naive.a):end));
+hold off
+basicPlot(error_org,noLags,'Original domain not shifted')
