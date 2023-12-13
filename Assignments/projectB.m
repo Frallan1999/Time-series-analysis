@@ -3,6 +3,7 @@
 % Assignment 
 %
 %
+
 clear; 
 close all;
 % addpath('functions', '/data')         % Add this line to update the path
@@ -93,33 +94,63 @@ fprintf(['The Box-Cox curve is maximized at %4.2f.\n'], lambda_B1)
 subplot(122)
 normplot(m)
 
-% Lets try one over the square root of the data
+% Lets try with the log of the data (option 1)
 constant = abs(min(m))+1;
-m_trans = 1./sqrt(m+constant);
-checkIfNormal(m_trans,'modelling data')
-figure()
-plot(m_trans)
+m_log = log(m+constant);
+checkIfNormal(m_log,'modelling data');
+figure();
+plot(m_log);
+
+%Lets try one over the square root of the data (option 2)
+%constant = abs(min(m))+1;
+%m_sqrt= 1./sqrt(m+constant);
+%checkIfNormal(m_sqrt,'modelling data');
+%figure();
+%plot(m_sqrt);
 
 % Much better -> Lets continue with m_trans 
-v_trans = 1./sqrt(m+constant);
-t_trans = 1./sqrt(m+constant);
+v_log = log(v + constant);
+t_log = log(t + constant);
 %%  3.2 Model B1 - NVDI prediction without external input
 % Periodicity and model selection
 close all; 
 clc; 
 
-noLags = 50;           % max up to N/4
-plotACFnPACF(m_trans,noLags, 'model data');
+noLags = 50;                             % max up to N/4
+plotACFnPACF(m_log,noLags, 'model data');
 
-% Differentiate on season 36 
-A36 = [1 zeros(1,35) -0.4];                % Sets the season
-m_s = filter(A36,1,m_trans);             % Filter on seasonality 36 
+% Differentiate on season 36 with nabla 
+A36 = [1 zeros(1,35) -1];                % Sets the season
+m_s = filter(A36,1,m_log);               % Filter on seasonality 36 
 m_s = m_s(length(A36):end);              % Omit initial samples
 data = iddata(m_s);                      % Create object for estimation
-figure(2)
+figure()
 plot(m_s);
-plotACFnPACF(m_s, noLags, "model data after differentiation");  
+plotACFnPACF(m_s, noLags, "model data after differentiation with nabla36");  
 
+% Differentiate on season 36 with a36 = -0.4
+A36 = [1 zeros(1,35) -0.35];              % Sets the season
+m_s = filter(A36,1,m_log);             % Filter on seasonality 36 
+m_s = m_s(length(A36):end);              % Omit initial samples
+data = iddata(m_s);                      % Create object for estimation
+plotACFnPACF(m_s, noLags, "model data with a36 = ");  
+figure()
+plot(m_s);
+%%
+
+close all
+m = 30;
+
+% initial model, estimate a1, a2, a24 a25 26 
+model_init = idpoly([1 zeros(1,26)] ,[] ,[1 zeros(1,23) 1]);       % Set up inital model
+model_init.Structure.a.Free = [0 1 1 zeros(1,21) 1 1 1];
+model_init.Structure.c.Free = [zeros(1,24) 1];
+
+model_armax = pem(z,model_init);         % Estimate a1 and a2 
+res = resid(model_armax, z);             % Create residual
+basicPlot(res.y, m, "residual");             
+present(model_armax);
+whitenessTest(res.y);
 %% 2. NVDI prediction without external input
 % Start by plotting the data
 close all
@@ -128,9 +159,6 @@ clc
 basicPlot(m,100,'Modeling data')
 checkIfNormal(m,'Modeling set','D',0.05);
 
-% Two reflections:
-% 1. Strong season of 12 to be handled - differentiate
-% 2. PACF suggests maybe AR(1)?
 
 m_d = myFilter([1 zeros(1,35) -0.7],1,m);
 
