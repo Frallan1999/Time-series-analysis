@@ -137,7 +137,7 @@ plotACFnPACF(m_diff, noLags, "model data with a36 = 0.35");
 figure()
 plot(m_diff);
 
-% Now with differentiating with (1-0.35*z^-36), we want to remove the mean
+% Remove mean of differentiated data
 m_diff_mean = m_diff - mean(m_diff);
 figure()
 plot(m_diff_mean)        
@@ -159,9 +159,42 @@ plotACFnPACF(res.y, noLags, "Residual for AR(1) modelling");
 figure()
 present(model_ar1);
 whitenessTest(res.y);
-checkIfNormal(res.y,'Residuals for AR(1)')
+checkIfNormal(res.y,'Residuals for AR(1)');
+plotNTdist(res.y);
+% Looks white, but residual not normal --> can't 100 procent trust result.
+% the residual is however t-dstriuted, even wider confidence interval for
+% testing whiteness, so it is OK! 
 
-% Looks white, but residual not normal --> can't 100 procent trust result. 
+%%  3.2 Model B1 - NVDI prediction without external input
+% Model data without differentiation (incorporating the season)
+close all; 
+clc; 
+noLags = 50; 
+
+% Remove mean of logarithmised data
+m_mean = m_log - mean(m_log);
+
+% initial model - based on information from differentiated
+A = [1 zeros(1,36)];
+C = [1];
+data_m_mean = iddata(m_mean);
+model_init = idpoly(A, [], C);
+model_init.Structure.a.Free = [0 1 zeros(1,34) 1];
+model_ar36 = pem(data_m_mean, model_init);
+res = resid(model_ar36, data_m_mean);
+plotACFnPACF(res.y, noLags, "Residual for AR(1) modelling");
+figure()
+present(model_ar36);
+whitenessTest(res.y);
+checkIfNormal(res.y,'Residuals for AR(1)');
+plotNTdist(res.y);
+
+
+
+
+
+
+
 
 %% 2. NVDI prediction without external input
 % Start by plotting the data

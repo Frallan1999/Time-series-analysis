@@ -120,54 +120,73 @@ noLags = 50;                % max up to N/4
 plotACFnPACF(m_log,noLags, 'model data');
 
 % Differentiate on season 36 with nabla (1-z^-36)
-A36 = [1 zeros(1,35) -1];                % Sets the season
-m_diff = filter(A36,1,m_log);               % Filter on seasonality 36 
-m_diff = m_diff(length(A36):end);              % Omit initial samples
-data = iddata(m_diff);                      % Create object for estimation
+A36 = [1 zeros(1,35) -1];                       % Sets the season
+m_diff = filter(A36,1,m_log);                   % Filter on seasonality 36 
+m_diff = m_diff(length(A36):end);               % Omit initial samples
+data = iddata(m_diff);                          % Create object for estimation
 figure()
 plot(m_diff);
 plotACFnPACF(m_diff, noLags, "model data after differentiation with nabla36");  
 
 % Differentiate on season 36 with (1-0.35*z^-36)
-A36 = [1 zeros(1,35) -0.35];              % Sets the season
-m_diff = filter(A36,1,m_log);             % Filter on seasonality 36 
-m_diff = m_diff(length(A36):end);              % Omit initial samples
-data = iddata(m_diff);                      % Create object for estimation
+A36 = [1 zeros(1,35) -0.35];                     % Sets the season
+m_diff = filter(A36,1,m_log);                    % Filter on seasonality 36 
+m_diff = m_diff(length(A36):end);                % Omit initial samples
+data = iddata(m_diff);                           % Create object for estimation
 plotACFnPACF(m_diff, noLags, "model data with a36 = 0.35");  
 figure()
 plot(m_diff);
 
-% Now with differentiating with (1-0.35*z^-36), we want to remove the mean
+% Remove mean of differentiated data
 m_diff_mean = m_diff - mean(m_diff);
 figure()
 plot(m_diff_mean)        
 %%  3.2 Model B1 - NVDI prediction without external input
 % Model the data after differentiating 
 close all; 
+clc;
 noLags = 50; 
 
-% initial model, estimate a1,
-A = [1 0]
-C = [1]
-model_init = idpoly([1 0], [],)
+% initial model - try AR(1)
+A = [1 0];
+C = [1];
+data_m_diff_mean = iddata(m_diff_mean);
 
-
-
-%%
-
-close all
-m = 30;
-
-% initial model, estimate a1, a2, a24 a25 26 
-model_init = idpoly([1 zeros(1,26)] ,[] ,[1 zeros(1,23) 1]);       % Set up inital model
-model_init.Structure.a.Free = [0 1 1 zeros(1,21) 1 1 1];
-model_init.Structure.c.Free = [zeros(1,24) 1];
-
-model_armax = pem(z,model_init);         % Estimate a1 and a2 
-res = resid(model_armax, z);             % Create residual
-basicPlot(res.y, m, "residual");             
-present(model_armax);
+model_init = idpoly(A, [], C);                       % Set up initial model
+model_ar1 = pem(data_m_diff_mean, model_init);       % Optimize variables 
+res = resid(model_ar1, data_m_diff_mean);            % Calculate residuals 
+plotACFnPACF(res.y, noLags, "Residual for AR(1) modelling");
+figure()
+present(model_ar1);
 whitenessTest(res.y);
+checkIfNormal(res.y,'Residuals for AR(1)');
+plotNTdist(res.y);
+% Looks white, but residual not normal --> can't 100 procent trust result.
+% the residual is however t-dstriuted, even wider confidence interval for
+% testing whiteness, so it is OK! 
+
+%%  3.2 Model B1 - NVDI prediction without external input
+% Model data without differentiation (incorporating the season)
+close all; 
+clc; 
+noLags = 50; 
+
+% Remove mean of logarithmised data
+m_mean = plot(m_log);
+
+% initial model - based on information from differentiated
+A = [1 zeros(1,36)];
+C = [1];
+data_m_mean = iddata(m_mean);
+model_init = idpoly()
+
+
+
+
+
+
+
+
 %% 2. NVDI prediction without external input
 % Start by plotting the data
 close all
