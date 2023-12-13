@@ -261,7 +261,7 @@ plotNTdist(res.y);
 %%  3.2.2 Model prediction (B1) 
 close all; 
 clc; 
-k = 25;                  % sets number of steps prediction
+k = 1;                  % sets number of steps prediction
 
 % Solve the Diophantine equation and create predictions
 [Fk, Gk] = polydiv(model_sarima.c, model_sarima.a, k);
@@ -272,36 +272,25 @@ yhat_k = yhat_k(throw:end);
 % Transform prediction into original domain
 yhat_k_org = exp(yhat_k);
 
-% It can be seen that the shift is IN GENERAL this (and is fun to then
-% incorporate to be able to plot for both shifted and non shifted
-if k == 1 or 
-    shift = 
+shiftK = round(mean(grpdelay(Gk, 1))) %THIS????
 
-
-
-error_shifted = v_log(throw:end-shiftK) - yhat_k(1+shiftK:end);
-error_org_shifted = v(throw:end-shiftK) - yhat_k_org(1+shiftK:end);
-error = v_log(throw:end) - yhat_k;
-error_org = v(throw:end) - yhat_k_org;
+error = v_log(throw+shiftK:end) - yhat_k(1:end-shiftK);
+error_org = v(throw+shiftK:end) - yhat_k_org(1:end-shiftK);  
 var(error)
 var(error_org)
-var(error_shifted)
-var(error_org_shifted)
 
+% New domain plot
+hold on
+plot(yhat_k(1:end-40));         % blu
+plot(v_log(throw+shiftK:end));
+hold off
+basicPlot(error,noLags,'new')
 
-% Original domain plot (not shifted)
+% Original domain plot
 figure()
 hold on
 plot(yhat_k_org,'g');
 plot(v(throw:end));
-hold off
-basicPlot(error_org,noLags,'org')
-
-% Original domain plot (not shifted)
-figure()
-hold on
-plot(yhat_k_org(1+shiftK:end),'g');
-plot(v(throw:end-shiftK));
 hold off
 basicPlot(error_org,noLags,'org')
 

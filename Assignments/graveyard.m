@@ -7,6 +7,13 @@ clear;
 close all;
 % addpath('functions', '/data')     % Add this line to update the path
 addpath('../functions', '../data')     % Add this line to update the path (Hanna)
+%% B1 model prediction 
+hold on
+plot(yhat_k(1+shiftK:end));         % blue
+plot(v_log(throw:end-shiftK));
+hold off
+basicPlot(error,noLags,'new')
+
 
 %% TEST WITH NABLA INSTEAD
 
