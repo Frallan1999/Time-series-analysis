@@ -39,7 +39,7 @@ normplot(rain_org)
 checkIfNormal(rain_org, 'ElGeneina rain org');
 
 % Looking at the Normal probability plot. The rain_org data does not look gaussian at all.
-% Looking at the BJ curve we see a maximization close to zeo -> suggesting
+% Looking at the BJ curve we see a maximization close to zero -> suggesting
 % a log transform might be helpful
 
 %% 2.1.1: Gaussian analysis of original rain data
@@ -179,6 +179,8 @@ plot(rain_t, rain)
 sum(rain_kalman)                 
 sum(rain_org)                               
 abs(sum(rain_kalman)-sum(rain_org))
+
+save('rain_kalman.mat', 'rain_kalman');
 
 %% 2.1.3: Kalman reconstruction
 % Plotting the results
