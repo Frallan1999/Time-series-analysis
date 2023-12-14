@@ -3,7 +3,7 @@
 % Assignment 
 
 clear; 
-close all;
+close all; 
 % addpath('functions', '/data')         % Add this line to update the path
 addpath('../functions', '../data')      % Add this line to update the path (Hanna)
 
@@ -30,7 +30,6 @@ v = 2*(valid-min_data)/(max_data - min_data)-1;
 t = 2*(test-min_data)/(max_data - min_data)-1;
 
 % Transformation of data 
-
 m_log = log(m);
 v_log = log(v);
 t_log = log(t);
@@ -38,7 +37,8 @@ t_log = log(t);
 plot(m_t, model);
 nbrLags = 50;
 
-%% Dividing the (input) rain data into the same modeling, validation and test data as (output) NVDI 
+%% 3.3 Model B2 - NVDI prediction with rain as externalinput
+% Dividing the (input) rain data into the same modeling, validation and test data as (output) NVDI 
 % Dividing the x-data 
 clc
 close all
@@ -51,21 +51,20 @@ plot(rain_kalman_t, rain_kalman)
 title('Reconstructed rain in Kalman')
 subplot(2,1,2)
 plot(ElGeneina.rain_org_t, ElGeneina.rain_org) 
-title('Rain without interpolation')
+title('Original rain data')
   
-x_all = rain_kalman;            % From A, the reconstructed rain in original domain
-rain_t = rain_kalman_t;         % From A, the time line is slightly different with reconstructed rain than interpolated. Adjusted for this. 
-xm_t = rain_t(1:1245);          % Ensure both input and output model data ends same date (1994). 
+x_all = rain_kalman;            % From A, the reconstructed rain
+rain_t = rain_kalman_t;         % From A, the reconstructed rain timeline 
+xm_t = rain_t(1:1245);          % Ensure both input and output model-data ends same date (1994). 
 
 % The time for model x will be longer than modeling y, as we have rain data from long before we have NVDI data. 
-% Validation and test data should cover same time periods for both.
 xm = x_all(1:length(xm_t));
 
-% Does rain REALLY matter 20 years in advance? We experience with making it
-% shorter to easier identify true delay between x and y
-xm_short = x_all(700:length(xm_t));
-xm_t_short = rain_t(700:1245);
+% Make model rain data for same period as model NVDI data
+xm_real = xm(end-length(m_t)+1:end)
+xm_real_t = m_t; 
 
+% Validation and test data should cover same time periods for both.
 xv = x_all(length(xm)+1:length(xm)+length(v_log));
 xv_t = v_t;                 % Should be the exact same time
 
@@ -86,43 +85,42 @@ subplot(4,1,4)
 plot(t_t, xt)
 title('Test data, x') % Seems correct
 
-%% Fit Box-Jenkins to the data
-% Transform input data x for easier modeling 
+%% 3.3.1 Prewhitening of the precipitation data
 clc
 close all
 
 % We wish to model yt = B(z)z^-d / A2(z) * xt + C1(z) / A1(z) * et
-
 % First, attempt to find transfer function H(z) = B(z) z^-d / A2(z) 
 % from xt to yt
 % We know xt is not white, thus we need to perform pre-whitening
 % Form an ARMA model of the input A3(z) xt = C3(z) wt
 % We may need to make x more Gaussian in order to fit an ARMA. (?)
 
-bcNormPlot(xm) % Suggesting log transformation might be useful 
-xm_log = log(xm+1);
-xm_short_log = log(xm_short+1);
-basicPlot(xm_short_log, nbrLags, 'X model data')
-checkIfNormal(xm_short_log,'X model data');
+bcNormPlot(xm)                                      % -> Log transformation might be useful 
+xm_log = log(xm+1);             
+xm_real_log = log(xm_real+1);                       % Used! 
+basicPlot(xm_real_log, nbrLags, 'X model data')
+checkIfNormal(xm_real_log,'X model data');
 
-%% Fit Box-Jenkins to the data 
-% Pre-whitening step: Fitting an ARMA to A3 x = C3 et
+%% 3.3.1 Prewhitening of the precipitation data
+% Fitting an ARMA to A3 x = C3 et
 clc
 close all
 
-y = m_log;
-%x = xm_short_log;
-x = xm_log(end-length(y)+1:end); %We want to start at the same time in order to get 
-
-% our version before
-% A3 = [1 0 0];
-% C3 = [1 zeros(1,35) -1];
+x = xm_real_log;
 
 A3 = [1 zeros(1,35) -1];
-C3 = [1 zeros(1,9)];
+C3 = [1 zeros(1,35) -1];
 model_init = idpoly(A3 ,[], C3);
-model_init.Structure.a.Free = [0 1 1 zeros(1,7) zeros(1,25) 0 1];
-model_init.Structure.c.Free = [0 1 1 zeros(1,3) 1 0 0 1];
+model_init.Structure.a.Free = [0 1 1 zeros(1,33) 1];
+model_init.Structure.c.Free = [0 zeros(1,35) 1];
+
+% Test this
+% A3 = [1 zeros(1,35) -1];
+% C3 = [1 zeros(1,9)];
+% model_init = idpoly(A3 ,[], C3);
+% model_init.Structure.a.Free = [0 1 1 zeros(1,7) zeros(1,25) 0 1];
+% model_init.Structure.c.Free = [0 1 1 zeros(1,3) 1 0 0 1];
 
 c3a3 = pem(x, model_init);
 
@@ -133,11 +131,13 @@ whitenessTest(res.y);
 checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 % plotNTdist(res.y);
 
-%% Fit Box-Jenkins to the data 
+%% 3.3.2 Box Jenkins 
 % Compute CCF eps and w, eps_t = H(z) * w_t + v_t
 close all;
 
-% Replace xt with wt and pre-whiten y to form eps = H(z)wt + vt
+y = m_log;
+
+% Simulate wt and eps_t
 eps_t = myFilter(c3a3.a, c3a3.c, y);
 w_t = myFilter(c3a3.a, c3a3.c, x);
 
@@ -156,23 +156,29 @@ plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--')
 hold off
 
 % r (A2 order): exponential decay suggests 0
-% d (delay for B): could be 2
-% s (order for B after delay): 1 
+% d (delay for B): could be 4
+% s (order for B after delay): 0 
 
-%% Fit Box-Jenkins to the data 
+% r = 2
+% d = 2
+% s = 2 
+
+
+%% 3.3.2 Box Jenkins 
 % Testing model orders for A2 and B
 d = 4;                                      % To be updated
-% A2 = [1 0 0]; 
-% B = [zeros(1,7) 1 zeros(1,5)];
-A2 = 1;
-B = [0 0 0 0 1 0];
+A2 = [1 0 0]; 
+B =  [0 0 1 0];
+% A2 = [1];
+% B = [0 0 0 0 1];
 
 Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
-z = iddata(y,xm_log(end-d-length(y)+1:end-d));    % Length adjusted to delay 
-ba2 = pem(z,Mi); present(ba2)
-etilde = resid (ba2, z );
+z = iddata(y,x);    
+Mba2 = pem(z,Mi); 
+present(Mba2)
+etilde = resid (Mba2, z);
 
-%% Fit Box-Jenkins to the data 
+%% 3.3.2 Box Jenkins
 % Check if etilde = yt - Bz^d / A2 xt is uncorrelated with xt - it should be 
 close all;
 clc; 
@@ -189,45 +195,49 @@ hold off
 % Next step is to derive orders of C1 and A1 from etilde = C1 / A1 et -->
 % ARMA 
 
-%% Fit Box-Jenkins to the data 
+%% 3.3.2 Box Jenkins
 % Determine orders for A1 and C1, model etilde = C1/A1 * e
 close all;
 clc; 
 basicPlot(etilde.y,nbrLags,'etilde, look for A1 and C1');
 
-A1 = [1 0 zeros(1,34) -1] ; 
-C1 = 1;
+A1 = [1 zeros(1,35) -1] ; 
+% C1 = [1 zeros(1,5) -1];
+C1 = [1 0 1];
 model_init = idpoly (A1, [], C1);
-model_init.Structure.A.Free = [0 1 zeros(1,34) 1];
+model_init.Structure.a.Free = [0 1 zeros(1,34) 1];
+model_init.Structure.c.Free = [0 0 1];
 
+% model_init.Structure.a.Free = [0 1 1 zeros(1,3) 0 zeros(1,29) 1];
+% model_init.Structure.c.Free = [0 0 1 zeros(1,3) 1];
 etilde_data = iddata(etilde.y);
 a1c1 = pem(etilde_data,model_init); 
 present(a1c1)
 res_tilde = resid (a1c1, etilde_data);
 basicPlot(res_tilde.y,nbrLags,'ARMA(1,0)');
+checkIfNormal(res_tilde.y, 'residual e tilde');
 whitenessTest(res_tilde.y);
 
-%% Fit Box-Jenkins to the data 
+%% 3.3.2 Box Jenkins
 % Reestimate the full model with pem (as model will change when we do it all together) 
 close all;
 clc; 
 
-%B = [zeros(1,7) 1 zeros(1,3)];
-%A2 = [1 0 0];
+% B = [zeros(1,7) 1 zeros(1,3)];
+% A2 = [1 0 0];
+% B = [1 0 0 0]
 Mi = idpoly(1, B, C1, A1, A2);
-Mi.Structure.D.Free = [0 1 zeros(1,34) 1];
-%Mi.Structure.B.Free = [zeros(1,10) 1];
+Mi.Structure.D.Free = [0 1 zeros(1,34) 1];  % VA?
+Mi.Structure.C.Free = [0 0 1];
 %Mi.Structure.F.Free = [0 0 1];
 MboxJ = pem(z,Mi);
 present(MboxJ)
 ehat = resid(MboxJ,z);      % the estimate of the noise process e_t
 
-%% Fit Box-Jenkins to the data 
-% Final analysis of ehat
-% ehat and x should be uncorrelated
+%% 3.3.2 Box Jenkins
+% Final analysis of ehat - is the entier model good enough?
 close all;
 clc; 
-
 
 M=40;
 stem(-M:M,crosscorr(ehat.y ,x ,M)); 
