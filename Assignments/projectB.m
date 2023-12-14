@@ -177,11 +177,11 @@ model_init = idpoly(A, [], C);                       % Set up initial model
 model_init.Structure.c.Free = [0 zeros(1,35) 1];        % added ones C changed
 model_arma = pem(data_m_diff_mean, model_init);       % Optimize variables 
 res = resid(model_arma, data_m_diff_mean);            % Calculate residuals 
-plotACFnPACF(res.y, noLags, "Residual for AR(1) modelling");
+plotACFnPACF(res.y, noLags, "Residual for a1 and c36 modelling");
 figure()
 present(model_arma);
 whitenessTest(res.y);
-checkIfNormal(res.y,'Residuals for AR(1)');
+checkIfNormal(res.y,'Residuals for a1 and c36 modelling');
 plotNTdist(res.y);
 % FPE: 0.04292 and Monti: 26.56 < 36.42
 % All significant
@@ -195,11 +195,11 @@ model_init = idpoly(A, [], C);                       % Set up initial model
 model_init.Structure.c.Free = [0 0 0 1 zeros(1,32) 1];        % added ones C changed
 model_arma = pem(data_m_diff_mean, model_init);       % Optimize variables 
 res = resid(model_arma, data_m_diff_mean);            % Calculate residuals 
-plotACFnPACF(res.y, noLags, "Residual for AR(1) modelling");
+plotACFnPACF(res.y, noLags, "Residual for a1, c3, and c36 modelling");
 figure()
 present(model_arma);
 whitenessTest(res.y);
-checkIfNormal(res.y,'Residuals for AR(1)');
+checkIfNormal(res.y,'Residuals for a1, c3, and c36 modelling');
 plotNTdist(res.y);
 % FPE: 0.04254 and Monti: 17.93 < 36.42
 % All significant (Best so far) 
@@ -214,11 +214,11 @@ model_init = idpoly(A, [], C);                       % Set up initial model
 model_init.Structure.c.Free = [0 0 0 1];        % added ones C changed
 model_arma = pem(data_m_diff_mean, model_init);       % Optimize variables 
 res = resid(model_arma, data_m_diff_mean);            % Calculate residuals 
-plotACFnPACF(res.y, noLags, "Residual for AR(1) modelling");
+plotACFnPACF(res.y, noLags, "Residual for a1 and c3 modelling");
 figure()
 present(model_arma);
 whitenessTest(res.y);
-checkIfNormal(res.y,'Residuals for AR(1)');
+checkIfNormal(res.y,'Residuals for a1 and c3 modelling');
 plotNTdist(res.y);
 % FPE: 0.04409 and Monti: 12.52 < 36.42
 % c36 seems unnecessary (probabky even more when incorporating this season
@@ -240,12 +240,14 @@ A = [1 0];
 A = conv([1 zeros(1,35) -1], A)
 % C = [1]
 C = [1 0 0 1];
+% C = [1 zeros(1,36)];
  
 data_m_log = iddata(m_log);
 
 model_init = idpoly(A, [], C);
 model_init.Structure.a.Free = [0 1 zeros(1,34) 1 0];        
-model_init.Structure.c.Free = [zeros(1,3) 1];        % added ones C changed
+model_init.Structure.c.Free = [zeros(1,3) 1];        
+% model_init.Structure.c.Free = [0 0 0 1 zeros(1,32) 1];        
 model_sarima = pem(data_m_log, model_init);
 res = resid(model_sarima, data_m_log);
 plotACFnPACF(res.y, noLags, "Residual for SARIMA modelling");
@@ -338,8 +340,8 @@ present(model_naive);
 %% Test naive model on validation data
 close all; 
 clc; 
-k = 45;                  % sets number of steps prediction
-% very bad with k leess than 36!!!
+k = 37;                  % sets number of steps prediction
+% very bad with k less than 37!!!
 
 % Solve the Diophantine equation and create predictions
 [Fk, Gk] = polydiv(model_naive.c, model_naive.a, k);
@@ -377,11 +379,12 @@ plot(v(throw:end-shift));
 hold off
 basicPlot(error_org,noLags,'Original domain')
 
-%% VER2 of NAIVE 
+%% Test naive model on validation data (ver2)
 close all; 
 yhat_k = filter(model_naive.a, model_naive.c, v);
 yhat_k = yhat_k(length(model_naive.a):end)
 error_org = v(length(model_naive.a):end) - yhat_k;
+var(error_org)   % 0.0043
 
 figure()
 hold on
@@ -389,3 +392,17 @@ plot(yhat_k,'g');
 plot(v(length(model_naive.a):end));
 hold off
 basicPlot(error_org,noLags,'Original domain not shifted')
+
+%% Test naive model on test data (ver2)
+close all; 
+yhat_k = filter(model_naive.a, model_naive.c, t);
+yhat_k = yhat_k(length(model_naive.a):end)
+error_org = t(length(model_naive.a):end) - yhat_k;
+var(error_org)   % 0.0076
+
+figure()
+hold on
+plot(yhat_k,'g');
+plot(t(length(model_naive.a):end));
+hold off
+% basicPlot(error_org,noLags,'Original domain not shifted')
