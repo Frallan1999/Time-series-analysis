@@ -40,6 +40,7 @@ t_log = log(t);
 plot(m_t, model);
 
 %% Fitting a model to current input 
+% Dividing the x-data 
 clc
 close all
 
@@ -54,22 +55,24 @@ plot(ElGeneina.rain_org_t, ElGeneina.rain_org)
 title('Rain without interpolation')
 
 rain_t = rain_kalman_t;
-x = rain_kalman;            % Remember that this is NOT transformed, AND in different time interval. 
+x_all = rain_kalman;            % Remember that this is NOT transformed, AND in different time interval. 
 xm_t = rain_t(1:1245);      % Manual look-up to avoid getting mismatching dates
 
 
 % The time for model x will be longer than modeling y, as we have rain data from long before we have NVDI data. 
 % Validation and test data should cover same time periods for both.
-xm = x(1:length(xm_t));
+xm = x_all(1:length(xm_t));
 
-%Does rain REALLY matter 20 years in advance? We make it shorter for easier
-%modelling
-xm_short = x(500:length(xm_t));
-xm_t_short = rain_t(500:1245);
+% Does rain REALLY matter 20 years in advance? We make it shorter for easier
+% modelling 
+xm_short = x_all(700:length(xm_t));
+xm_t_short = rain_t(700:1245);
 
-xv = x(length(xm)+1:length(xm)+length(v_log));      % Why
+xv = x_all(length(xm)+1:length(xm)+length(v_log));
+xv_t = v_t;                 % Should be the exact same time
 
-xt = x(length(xm)+length(xv):end);
+xt = x_all(length(xm)+length(xv):end);
+xt_t = t_t;
 
 figure(2)
 subplot(4,1,1)
@@ -83,7 +86,7 @@ plot(v_t, xv)
 title('Validation data, x')
 subplot(4,1,4)
 plot(t_t, xt)
-title('Test data, x') %Seems correct
+title('Test data, x') % Seems correct
 
 %% Box-Jenkins: Here we go
 clc
@@ -95,9 +98,9 @@ close all
 % from xt to yt
 % We know xt is not white, thus we need to perform pre-whitening
 % Form an ARMA model of the input A3(z) xt = C3(z) wt
-% We have in A explained xt as an AR with a1 = 0.2491. We need to make x
-% more Gaussian in order to fit an ARMA. 
+% We need to make x more Gaussian in order to fit an ARMA. (?)
 
+bcNormPlot(xm) % Suggesting log transformation might be useful 
 xm_log = log(xm+1);
 xm_short_log = log(xm_short+1);
 basicPlot(xm_short_log, 50, 'X model data')
@@ -105,9 +108,11 @@ checkIfNormal(xm_short_log,'X model data');
 
 %% Pre-whitening step: Fitting an ARMA to X
 % Note that our y is m_log, and our x is xm_log
+clc
+close all
+
 y = m_log;
 x = xm_short_log;
-
 
 A3 = [1 0 0];
 C3 = [1 zeros(1,35) -1];
@@ -132,6 +137,7 @@ w_t = myFilter(pw.c, pw.a, x);
 
 %% Compute CCF for eps_t = H(z) * w_t + v_t
 close all;
+
 M=40;
 stem(-M:M,crosscorr(w_t ,eps_t,M)); 
 title('Cross correlation function'), xlabel('Lag')
@@ -145,11 +151,11 @@ hold off
 % s (order for B after delay): s+d = time of decay, s+d = 12, --> s = 5 
 
 %% Testing the found model orders
-
+d = 7;                                      % To be updated
 A2 = [1 0 0]; 
 B = [zeros(1,7) 1 zeros(1,5)];
 Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
-z = iddata(y,x(1:length(y)));    % fattar att första är data och andra är input 
+z = iddata(y,x((nd-d-length(y)):end-d);    % See if length can be adjusted to delay 
 Mba2 = pem(z,Mi); present(Mba2)
 etilde = resid (Mba2, z );
 
