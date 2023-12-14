@@ -340,7 +340,7 @@ present(model_naive);
 %% Test naive model on validation data
 close all; 
 clc; 
-k = 37;                  % sets number of steps prediction
+k = 1;                  % sets number of steps prediction
 % very bad with k less than 37!!!
 
 % Solve the Diophantine equation and create predictions
