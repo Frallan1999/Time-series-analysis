@@ -165,13 +165,11 @@ hold off
 % A2 = [1 0 0]; 
 % B = [zeros(1,7) 1 zeros(1,5)];
 %A2 = [1 0 0];
-A2 = [1 0 0]; % r = 2 
-% THIS ONE WORKS PERFECTLY B = [0 0 1 0 0 0]; % d = 2, s = 3 
-B = [0 1 0 0 0]; %d = 1, s = 3 
+A2 = [1 0 0]; % r =2 
+B = [0 0 1 0 0 0]; % d = 2, s = 3 
 
 Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
-%Mi.Structure.B.Free = [0 0 0 0 1 1];
-Mi.Structure.B.Free = [0 0 1 1 1];
+Mi.Structure.B.Free = [0 0 0 0 1 1];
 z = iddata(y,x); 
 ba2 = pem(z,Mi); present(ba2)
 etilde = resid(ba2, z );
@@ -192,33 +190,25 @@ hold off
 % Next step is to derive orders of C1 and A1 from etilde = C1 / A1 et -->
 % ARMA 
 
-checkIfNormal(etilde.y,'etilde')
-
 %% Fit Box-Jenkins to the data 
 % Determine orders for A1 and C1, model etilde = C1/A1 * e
 close all;
 clc; 
 basicPlot(etilde.y,nbrLags,'etilde, look for A1 and C1');
 
-%FORTSÄTT EXPERIMENTERA MED C för att få den white. Jag skulle ta den andra
-%C annars om jag hade haft en annan delay
-A1 = [1 0 zeros(1,34) -1]; 
-%C1 = [1 zeros(1,5) 0 0 0 0];
-C1 = [1 zeros(1,5) 0];
+A1 = [1 0 zeros(1,34) -1] ; 
+C1 = [1 zeros(1,5) 0 0 0 0];
+%C1 = 1;
 model_init = idpoly (A1, [], C1);
 model_init.Structure.A.Free = [0 1 1 zeros(1,33) 1];
-model_init.Structure.C.Free = [zeros(1,6) 1];
-%model_init.Structure.C.Free = [zeros(1,6) 1 0 0 1];
+model_init.Structure.C.Free = [zeros(1,6) 1 0 0 1];
 
 etilde_data = iddata(etilde.y);
 a1c1 = pem(etilde_data,model_init); 
 present(a1c1)
 res_tilde = resid (a1c1, etilde_data);
 basicPlot(res_tilde.y,nbrLags,'ARMA(1,0)');
-
-%%
 whitenessTest(res_tilde.y);
-checkIfNormal(res_tilde.y, 'res tilde','D') %White enough
 
 %% Fit Box-Jenkins to the data 
 % Reestimate the full model with pem (as model will change when we do it all together) 
@@ -229,31 +219,14 @@ clc;
 %A2 = [1 0 0];
 Mi = idpoly(1, B, C1, A1, A2);
 Mi.Structure.D.Free = [0 1 1 zeros(1,33) 1];
-%Mi.Structure.C.Free = [zeros(1,6) 1 0 0 1];
-%Mi.Structure.B.Free = [0 0 0 0 1 1];
-
-%After changing delay
-Mi.Structure.C.Free = [zeros(1,6) 1];
-Mi.Structure.B.Free = [0 0 1 1 1];
+Mi.Structure.C.Free = [zeros(1,6) 1 0 0 1];
+Mi.Structure.B.Free = [0 0 0 0 1 1];
 
 MboxJ = pem(z,Mi);
 present(MboxJ)
 ehat = resid(MboxJ,z);      % the estimate of the noise process e_t
 
-%% Removing insignificant variables from above:
-
-close all;
-clc; 
-
-B = 1;
-C1 = 1;
-Mi = idpoly(1, B, C1, A1, A2);
-Mi.Structure.D.Free = [0 1 1 zeros(1,33) 1];
-%Mi.Structure.C.Free = [zeros(1,6) 1 0 0 1];
-
-MboxJ = pem(z,Mi);
-present(MboxJ)
-ehat = resid(MboxJ,z);      % the estimate of the noise process e_t
+%% Removing insignificant variables 
 
 %% Fit Box-Jenkins to the data 
 % Final analysis of ehat
@@ -283,5 +256,11 @@ checkIfNormal(ehat.y,'e-hat','D',0.05);
 
 %% Predict the input, x
 
+
+
 %% Use the Box-Jenkins model for NVDI prediction
+
+
+
+
 
