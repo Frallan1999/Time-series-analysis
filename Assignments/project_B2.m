@@ -13,7 +13,7 @@ addpath('../functions', '../data')      % Add this line to update the path (Hann
 load proj23.mat
 
 % Split the data
-n = length(ElGeneina.nvdi);
+% n = length(ElGeneina.nvdi);
 
 model = ElGeneina.nvdi(1:453,1);         % 70% for modelling
 m_t = ElGeneina.nvdi_t(1:453,1);
@@ -88,6 +88,19 @@ subplot(4,1,4)
 plot(t_t, xt)
 title('Test data, x') % Seems correct
 
+%% TEST (CAN BE REMOVED)
+close all; 
+test = ElGeneina.nvdi;
+rain_test = rain_kalman(end-length(test)+1:end);
+rain_t_test = rain_kalman_t(end-length(test)+1:end);
+
+plot(rain_t_test, rain_test);
+figure()
+plot(ElGeneina.nvdi_t, test);
+figure()
+[correlation, lag] = xcorr(rain_test, test);
+plot(lag, correlation);
+
 %% Fit Box-Jenkins to the data
 % Transform input data x for easier modeling 
 clc
@@ -115,15 +128,20 @@ close all
 y = m_log;
 x = xm_short_log;
 
-A3 = [1 0 0];
-C3 = [1 zeros(1,35) -1];
-%C3 = 1;
+% our version before
+% A3 = [1 0 0];
+% C3 = [1 zeros(1,35) -1];
+
+
+A3 = [1 zeros(1,35) -1];
+C3 = [1 zeros(1,9)]
 model_init = idpoly(A3 ,[], C3);
-%model_init.Structure.a.Free = [0 1 1];
-model_init.Structure.c.Free = [0 zeros(1,35) 1];
+model_init.Structure.a.Free = [0 1 1 zeros(1,7) zeros(1,25) 0 1];
+model_init.Structure.c.Free = [0 1 1 zeros(1,3) 1 0 0 1];
+
 c3a3 = pem(x, model_init);
 
-res = resid(c3a3, x);
+res = resid(c3a3, x); 
 present(c3a3);
 basicPlot(res.y,nbrLags,'Residuals')
 whitenessTest(res.y);
@@ -133,12 +151,18 @@ checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 %% Fit Box-Jenkins to the data 
 % Compute CCF eps and w, eps_t = H(z) * w_t + v_t
 close all;
+x = xm_log(end-length(y)+1:end);        % added 
 
 % Replace xt with wt and pre-whiten y to form eps = H(z)wt + vt
 eps_t = myFilter(c3a3.a, c3a3.c, y);
-w_t = myFilter(c3a3.c, c3a3.a, x);
+w_t = myFilter(c3a3.a, c3a3.c, x);
 
-M=40;
+basicPlot(eps_t,50,'Eps_t');
+basicPlot(w_t,50,'W_t');
+
+n = length(x); 
+M=100;
+figure()
 stem(-M:M,crosscorr(w_t ,eps_t,M)); 
 title('Cross correlation function'), xlabel('Lag')
 hold on
@@ -152,11 +176,14 @@ hold off
 
 %% Fit Box-Jenkins to the data 
 % Testing model orders for A2 and B
-d = 7;                                      % To be updated
-A2 = [1 0 0]; 
-B = [zeros(1,7) 1 zeros(1,5)];
+d = 4;                                      % To be updated
+% A2 = [1 0 0]; 
+% B = [zeros(1,7) 1 zeros(1,5)];
+A2 = 1;
+B = [0 0 0 0 1];
+
 Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
-z = iddata(y,x(end-d-length(y)+1:end-d));    % Length adjusted to delay 
+z = iddata(y,xm_log(end-d-length(y)+1:end-d));    % Length adjusted to delay 
 ba2 = pem(z,Mi); present(ba2)
 etilde = resid (ba2, z );
 
