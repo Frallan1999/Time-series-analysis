@@ -10,7 +10,6 @@ close all;
 addpath('../functions', '../data')      % Add this line to update the path (Hanna)
 
 %% 3. Modeling and validation for El-Geneina
-
 load proj23.mat
 
 % Split the data
@@ -40,9 +39,6 @@ t_log = log(t);
 
 plot(m_t, model);
 
-%% Bringing in the input data
-
-
 %% Fitting a model to current input 
 clc
 close all
@@ -51,7 +47,7 @@ load rain_kalman.mat
 
 figure(1)
 subplot(2,1,1)
-plot(ElGeneina.rain_t, rain_kalman) %Checking that we have the right data
+plot(ElGeneina.rain_t, rain_kalman)          % Checking that we have the right data
 title('Reconstructed rain in Kalman')
 subplot(2,1,2)
 plot(ElGeneina.rain_org_t, ElGeneina.rain_org) 

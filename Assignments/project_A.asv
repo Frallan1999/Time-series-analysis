@@ -167,25 +167,15 @@ end
 
 %% 2.1.3: Kalman reconstruction
 % New time scale for Kalman reconstruction 
-clc
 
-rain_kalman_t = zeros(length(rain_org_t)*3,1);
-year_difference = 10/(30*12);                       % 10 days between in years 
-
-for t = 1:length(rain_kalman_t) 
-    if mod(t,3) == 0
-        rain_kalman_t(t-2) = rain_org_t(t/3)-year_difference*2;
-        rain_kalman_t(t-1) = rain_org_t(t/3)-year_difference;
-        rain_kalman_t(t) = rain_org_t(t/3);
-    end
-end
+rain_kalman_t = length(rain_org_t)*3
 
 %% 2.1.3: Kalman reconstruction
 % ORIGINAL DATA
 % Plotting the results
 figure(1);
 subplot(311);
-plot(rain_kalman_t, rain_kalman)
+plot(rain_t, rain_kalman)
 subplot(312);
 plot(rain_org_t, rain_org)
 subplot(313);
@@ -202,7 +192,7 @@ save('rain_kalman.mat', 'rain_kalman');
 % LOG DATA
 figure(1);
 subplot(311);
-plot(rain_kalman_t, rain_kalman)
+plot(rain_t, rain_kalman)
 subplot(312);
 plot(rain_org_t, log_rain_org)
 subplot(313);
