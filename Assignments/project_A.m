@@ -195,8 +195,7 @@ sum(rain_kalman)
 sum(rain_org)                               
 abs(sum(rain_kalman)-sum(rain_org))
 
-save('rain_kalman.mat', 'rain_kalman');
-
+save('rain_kalman.mat', 'rain_kalman', 'rain_kalman_t');
 %% 2.1.3: Kalman reconstruction
 % Plotting the results. if using y where it is logged data
 % LOG DATA

@@ -47,15 +47,16 @@ load rain_kalman.mat
 
 figure(1)
 subplot(2,1,1)
-plot(rain_kalman_t, rain_kalman)          
+plot(rain_kalman_t, rain_kalman)          % Checking that we have the right data
 title('Reconstructed rain in Kalman')
 subplot(2,1,2)
 plot(ElGeneina.rain_org_t, ElGeneina.rain_org) 
 title('Rain without interpolation')
 
-rain_t = rain_kalman_t;
-x = rain_kalman;            % Remember that this is NOT transformed, AND in different time interval. 
-xm_t = rain_t(1:1245);      % Manual look-up to avoid getting mismatching dates
+rain_t = ElGeneina.rain_t;
+x = rain_kalman; %Remember that this is NOT transformed, AND in the wrong time interval. 
+xm_t = rain_t(1:1245); %Manual look-up to avoid getting mismatching dates
+
 
 
 % The time for model x will be longer than modeling y, as we have rain data from long before we have NVDI data. 
@@ -73,7 +74,7 @@ xt = x(length(xm)+length(xv):end);
 
 figure(2)
 subplot(4,1,1)
-plot(rain_kalman_t, rain_kalman)
+plot(ElGeneina.rain_t, rain_kalman)
 title('Full reconstructed rain')
 subplot(4,1,2)
 plot(xm_t, xm)
