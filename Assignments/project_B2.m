@@ -134,7 +134,7 @@ x = xm_short_log;
 
 
 A3 = [1 zeros(1,35) -1];
-C3 = [1 zeros(1,9)]
+C3 = [1 zeros(1,9)];
 model_init = idpoly(A3 ,[], C3);
 model_init.Structure.a.Free = [0 1 1 zeros(1,7) zeros(1,25) 0 1];
 model_init.Structure.c.Free = [0 1 1 zeros(1,3) 1 0 0 1];
@@ -170,9 +170,9 @@ plot(-M:M, 2/sqrt(n)*ones(1,2*M+1), 'r--')
 plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--') 
 hold off
 
-% r (A2 order): ringing suggests r = 2 
-% d (delay for B): could be 7
-% s (order for B after delay): s+d = time of decay, s+d = 12, --> s = 5 
+% r (A2 order): exponential decay suggests 0
+% d (delay for B): could be 2
+% s (order for B after delay): 1 
 
 %% Fit Box-Jenkins to the data 
 % Testing model orders for A2 and B
@@ -180,7 +180,7 @@ d = 4;                                      % To be updated
 % A2 = [1 0 0]; 
 % B = [zeros(1,7) 1 zeros(1,5)];
 A2 = 1;
-B = [0 0 0 0 1];
+B = [0 0 0 0 1 0];
 
 Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
 z = iddata(y,xm_log(end-d-length(y)+1:end-d));    % Length adjusted to delay 
@@ -210,9 +210,11 @@ close all;
 clc; 
 basicPlot(etilde.y,nbrLags,'etilde, look for A1 and C1');
 
-A1 = [1 0]; 
-C1 = [1];
+A1 = [1 0 zeros(1,34) -1] ; 
+C1 = 1;
 model_init = idpoly (A1, [], C1);
+model_init.Structure.A.Free = [0 1 zeros(1,34) 1];
+
 etilde_data = iddata(etilde.y);
 a1c1 = pem(etilde_data,model_init); 
 present(a1c1)
@@ -225,10 +227,10 @@ whitenessTest(res_tilde.y);
 close all;
 clc; 
 
-
 %B = [zeros(1,7) 1 zeros(1,3)];
 %A2 = [1 0 0];
 Mi = idpoly(1, B, C1, A1, A2);
+Mi.Structure.D.Free = [0 1 zeros(1,34) 1];
 %Mi.Structure.B.Free = [zeros(1,10) 1];
 %Mi.Structure.F.Free = [0 0 1];
 MboxJ = pem(z,Mi);
