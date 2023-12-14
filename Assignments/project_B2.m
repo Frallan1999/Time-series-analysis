@@ -62,13 +62,12 @@ xm_t = rain_t(1:1245);      % Manual look-up to avoid getting mismatching dates
 % Validation and test data should cover same time periods for both.
 xm = x(1:length(xm_t));
 
-%Does rain REALLY matter 20 years in advance? We make it shorter for easier
-%modelling
+% Does rain REALLY matter 20 years in advance? We make it shorter for easier
+% modelling 
 xm_short = x(500:length(xm_t));
 xm_t_short = rain_t(500:1245);
 
-xv = x(length(xm)+1:length(xm)+length(v_log));
-
+xv = x(length(xm)+1:length(xm)+length(v_log));      % Why
 xt = x(length(xm)+length(xv):end);
 
 figure(2)
@@ -83,7 +82,7 @@ plot(v_t, xv)
 title('Validation data, x')
 subplot(4,1,4)
 plot(t_t, xt)
-title('Test data, x') %Seems correct
+title('Test data, x') % Seems correct
 
 %% Box-Jenkins: Here we go
 clc
