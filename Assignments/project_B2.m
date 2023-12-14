@@ -1,8 +1,6 @@
 %
 % Time series analysis
 % Assignment 
-%
-%
 
 clear; 
 close all;
@@ -88,19 +86,6 @@ subplot(4,1,4)
 plot(t_t, xt)
 title('Test data, x') % Seems correct
 
-%% TEST (CAN BE REMOVED)
-close all; 
-test = ElGeneina.nvdi;
-rain_test = rain_kalman(end-length(test)+1:end);
-rain_t_test = rain_kalman_t(end-length(test)+1:end);
-
-plot(rain_t_test, rain_test);
-figure()
-plot(ElGeneina.nvdi_t, test);
-figure()
-[correlation, lag] = xcorr(rain_test, test);
-plot(lag, correlation);
-
 %% Fit Box-Jenkins to the data
 % Transform input data x for easier modeling 
 clc
@@ -126,12 +111,12 @@ clc
 close all
 
 y = m_log;
-x = xm_short_log;
+%x = xm_short_log;
+x = xm_log(end-length(y)+1:end); %We want to start at the same time in order to get 
 
 % our version before
 % A3 = [1 0 0];
 % C3 = [1 zeros(1,35) -1];
-
 
 A3 = [1 zeros(1,35) -1];
 C3 = [1 zeros(1,9)];
@@ -151,7 +136,6 @@ checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 %% Fit Box-Jenkins to the data 
 % Compute CCF eps and w, eps_t = H(z) * w_t + v_t
 close all;
-x = xm_log(end-length(y)+1:end);        % added 
 
 % Replace xt with wt and pre-whiten y to form eps = H(z)wt + vt
 eps_t = myFilter(c3a3.a, c3a3.c, y);
@@ -161,6 +145,7 @@ basicPlot(eps_t,50,'Eps_t');
 basicPlot(w_t,50,'W_t');
 
 n = length(x); 
+
 M=100;
 figure()
 stem(-M:M,crosscorr(w_t ,eps_t,M)); 

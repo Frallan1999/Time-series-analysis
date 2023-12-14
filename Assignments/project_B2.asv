@@ -88,19 +88,6 @@ subplot(4,1,4)
 plot(t_t, xt)
 title('Test data, x') % Seems correct
 
-%% TEST (CAN BE REMOVED)
-close all; 
-test = ElGeneina.nvdi;
-rain_test = rain_kalman(end-length(test)+1:end);
-rain_t_test = rain_kalman_t(end-length(test)+1:end);
-
-plot(rain_t_test, rain_test);
-figure()
-plot(ElGeneina.nvdi_t, test);
-figure()
-[correlation, lag] = xcorr(rain_test, test);
-plot(lag, correlation);
-
 %% Fit Box-Jenkins to the data
 % Transform input data x for easier modeling 
 clc
@@ -126,12 +113,12 @@ clc
 close all
 
 y = m_log;
-x = xm_short_log;
+%x = xm_short_log;
+x = xm_log(end-length(y)+1:end); %We want to start at the same time in order to get 
 
 % our version before
 % A3 = [1 0 0];
 % C3 = [1 zeros(1,35) -1];
-
 
 A3 = [1 zeros(1,35) -1];
 C3 = [1 zeros(1,9)];
@@ -151,7 +138,6 @@ checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 %% Fit Box-Jenkins to the data 
 % Compute CCF eps and w, eps_t = H(z) * w_t + v_t
 close all;
-x = xm_log(end-length(y)+1:end);        % added 
 
 % Replace xt with wt and pre-whiten y to form eps = H(z)wt + vt
 eps_t = myFilter(c3a3.a, c3a3.c, y);
@@ -161,6 +147,7 @@ basicPlot(eps_t,50,'Eps_t');
 basicPlot(w_t,50,'W_t');
 
 n = length(x); 
+
 M=100;
 figure()
 stem(-M:M,crosscorr(w_t ,eps_t,M)); 
@@ -210,10 +197,10 @@ close all;
 clc; 
 basicPlot(etilde.y,nbrLags,'etilde, look for A1 and C1');
 
-A1 = [1 0 zeros(34,1) -1] ; 
+A1 = [1 0 zeros(1,34) -1] ; 
 C1 = 1;
 model_init = idpoly (A1, [], C1);
-model_init.Structure.a.free = [0 1 zeros(34,1) 1];
+model_init.Structure.A.Free = [0 1 zeros(1,34) 1];
 
 etilde_data = iddata(etilde.y);
 a1c1 = pem(etilde_data,model_init); 
@@ -227,10 +214,10 @@ whitenessTest(res_tilde.y);
 close all;
 clc; 
 
-
 %B = [zeros(1,7) 1 zeros(1,3)];
 %A2 = [1 0 0];
 Mi = idpoly(1, B, C1, A1, A2);
+Mi.Structure.D.Free = [0 1 zeros(1,34) 1];
 %Mi.Structure.B.Free = [zeros(1,10) 1];
 %Mi.Structure.F.Free = [0 0 1];
 MboxJ = pem(z,Mi);

@@ -153,3 +153,16 @@ plot(nvdi_t, nvdi_outlier)
 checkIfNormal(nvdi_outlier,'NVDI','D',0.05) %Observations 637, 639, 454, 201 seem to be a bit outside
 
 % Normalizing NVDI data as given in the assignment
+
+%% TEST (CAN BE REMOVED)
+close all; 
+test = ElGeneina.nvdi;
+rain_test = rain_kalman(end-length(test)+1:end);
+rain_t_test = rain_kalman_t(end-length(test)+1:end);
+
+plot(rain_t_test, rain_test);
+figure()
+plot(ElGeneina.nvdi_t, test);
+figure()
+[correlation, lag] = xcorr(rain_test, test);
+plot(lag, correlation);
