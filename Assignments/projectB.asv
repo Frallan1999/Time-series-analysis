@@ -125,7 +125,8 @@ m_diff = m_diff(length(A36):end);               % Omit initial samples
 data = iddata(m_diff);                          % Create object for estimation
 figure()
 plot(m_diff);
-plotACFnPACF(m_diff, noLags, "model data after differentiation with nabla36");  
+plotACFnPACF(m_diff, noLags, "model data after differentiation with nabla36");
+mean(m_diff)
 
 % Differentiate on season 36 with (1-0.35*z^-36)
 A36 = [1 zeros(1,35) -0.35];                     % Sets the season
@@ -135,12 +136,13 @@ data = iddata(m_diff);                           % Create object for estimation
 plotACFnPACF(m_diff, noLags, "model data with a36 = 0.35");  
 figure()
 plot(m_diff);
+mean(m_diff)
 
 % Remove mean of differentiated data
 m_diff_mean = m_diff - mean(m_diff);            % Note! This mean will prob not be same for validation and so on 
 % m_diff_mean = m_diff;
 figure()
-plot(m_diff_mean)        
+plot(m_diff_mean)
 
 %%  3.2 Model B1 - NVDI prediction without external input
 % Model the data after differentiating the data
@@ -237,7 +239,7 @@ noLags = 50;
 
 % initial model - based on information from differentiated
 A = [1 0];
-A = conv([1 zeros(1,35) -1], A)
+A = conv([1 zeros(1,35) -1], A);
 % C = [1]
 C = [1 0 0 1];
 % C = [1 zeros(1,36)];
@@ -268,8 +270,12 @@ throw = max(length(Gk), length(model_sarima.c));
 yhat_1 = filter(Gk, model_sarima.c, v_log);                             
 yhat_1 = yhat_1(throw:end);   
 yhat_1_org = exp(yhat_1);
+e = v(throw:end) - yhat_1_org;          %Calculating our error terms that we expect to behave like an MA
 var_1 = var(v(throw:end) - yhat_1_org)
 var_test= var(v_log(throw:end) - yhat_1)
+eps = myFilter(Fk, 1, e); % Removing the 
+basicPlot(eps, 50, 'Stationary prediction error')
+
 
 %%  3.2.2 Model prediction (B1) 
 close all; 
@@ -340,7 +346,7 @@ present(model_naive);
 %% Test naive model on validation data
 close all; 
 clc; 
-k = 45;                  % sets number of steps prediction
+k = 1;                  % sets number of steps prediction
 % very bad with k less than 37!!!
 
 % Solve the Diophantine equation and create predictions
@@ -379,7 +385,7 @@ plot(v(throw:end-shift));
 hold off
 basicPlot(error_org,noLags,'Original domain')
 
-%% VER2 of NAIVE 
+%% Test naive model on validation data (ver2)
 close all; 
 yhat_k = filter(model_naive.a, model_naive.c, v);
 yhat_k = yhat_k(length(model_naive.a):end)
@@ -392,3 +398,17 @@ plot(yhat_k,'g');
 plot(v(length(model_naive.a):end));
 hold off
 basicPlot(error_org,noLags,'Original domain not shifted')
+
+%% Test naive model on test data (ver2)
+close all; 
+yhat_k = filter(model_naive.a, model_naive.c, t);
+yhat_k = yhat_k(length(model_naive.a):end)
+error_org = t(length(model_naive.a):end) - yhat_k;
+var(error_org)   % 0.0076
+
+figure()
+hold on
+plot(yhat_k,'g');
+plot(t(length(model_naive.a):end));
+hold off
+% basicPlot(error_org,noLags,'Original domain not shifted')
