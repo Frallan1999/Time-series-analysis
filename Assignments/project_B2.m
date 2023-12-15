@@ -4,6 +4,7 @@
 
 clear; 
 close all; 
+clc; 
 % addpath('functions', '/data')         % Add this line to update the path
 addpath('../functions', '../data')      % Add this line to update the path (Hanna)
 
@@ -43,7 +44,7 @@ nbrLags = 50;
 clc
 close all
 
-load rain_kalman.mat
+load rain_kalman.mat;
 
 figure(1)
 subplot(2,1,1)
@@ -61,7 +62,7 @@ xm_t = rain_t(1:1245);          % Ensure both input and output model-data ends s
 xm = x_all(1:length(xm_t));
 
 % Make model rain data for same period as model NVDI data
-xm_real = xm(end-length(m_t)+1:end)
+xm_real = xm(end-length(m_t)+1:end);
 xm_real_t = m_t; 
 
 % Validation and test data should cover same time periods for both.
@@ -97,8 +98,12 @@ close all
 % We may need to make x more Gaussian in order to fit an ARMA. (?)
 
 bcNormPlot(xm)                                      % -> Log transformation might be useful 
-xm_log = log(xm+1);             
-xm_real_log = log(xm_real+1);                       % Used! 
+constant = 1; 
+xm_log = log(xm + constant);             
+xm_real_log = log(xm_real + constant);                       % Used!
+xv_log = log(xv + constant);
+xt_log = log(xt + constant);
+
 basicPlot(xm_real_log, nbrLags, 'X model data')
 checkIfNormal(xm_real_log,'X model data');
 
@@ -155,6 +160,7 @@ plot(-M:M, 2/sqrt(n)*ones(1,2*M+1), 'r--')
 plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--') 
 hold off
 
+% BEFORE 
 % r (A2 order): exponential decay suggests 0
 % d (delay for B): could be 4
 % s (order for B after delay): 0 
@@ -259,9 +265,54 @@ checkIfNormal(ehat.y,'e-hat','D',0.05);
 
 % The model we will use for prediction is then MboxJ. 
 
-%% Predict the input, x
+%% 3.3.2 Predict the input
+% Fitting an ARMA to A3 x = C3 et
+clc
+close all
 
+% Finding a good model to the data
+x = xm_real_log;
 
+A3 = [1 zeros(1,35) -1];
+C3 = [1 zeros(1,9)];
+model_init = idpoly(A3 ,[], C3);
+model_init.Structure.a.Free = [0 1 1 zeros(1,7) zeros(1,25) 0 1];
+model_init.Structure.c.Free = [0 1 1 zeros(1,3) 1 0 0 1];
+
+c3a3 = pem(x, model_init);
+
+res = resid(c3a3, x); 
+present(c3a3);
+basicPlot(res.y,nbrLags,'Residuals')
+whitenessTest(res.y);
+checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
+% plotNTdist(res.y);
+
+% White? No! But lets move on :) 
+%% 3.3.2 Predict the input
+k = 2;                  % sets number of steps prediction
+noLags = 50;
+
+% Solve the Diophantine equation and create predictions
+[Fk, Gk] = polydiv(c3a3.c, c3a3.a, k);
+throw = max(length(Gk), length(c3a3.c));
+yhat_k = filter(Gk, c3a3.c, xv_log);
+yhat_k = yhat_k(throw:end);
+
+% Transform prediction into original domain
+yhat_k_org = exp(yhat_k);
+
+% Create errors 
+error = xv(throw:end) - yhat_k_org;
+var(error)
+
+% Plot in original domain
+figure()
+hold on
+plot(yhat_k_org,'g');
+plot(xv(throw:end));
+hold off
+basicPlot(error,noLags,'Errors')
 
 %% Use the Box-Jenkins model for NVDI prediction
 
