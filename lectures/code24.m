@@ -34,7 +34,7 @@ xlim([1 N])
 
 
 %% Estimate the unknown parameters using a Kalman filter and form the k-step prediction.
-k  = 3;                                         % k-step prediction.
+k  = 5;                                         % k-step prediction.
 p0 = 3;                                         % Number of unknowns in the A polynomial (note: this is only the non-zero parameters!).
 q0 = 2;                                         % Number of unknowns in the C polynomial (note: this is only the non-zero parameters!).
 
