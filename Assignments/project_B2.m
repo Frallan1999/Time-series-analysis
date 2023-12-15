@@ -8,48 +8,67 @@ clc;
 % addpath('functions', '/data')         % Add this line to update the path
 addpath('../functions', '../data')      % Add this line to update the path (Hanna)
 
-%% 3. Modeling and validation for El-Geneina
+%% 3.3 Model B2 - NVDI prediction with rain as external input
+% Transforming the NVDI (y) data as in B1
+
 load proj23.mat
 
-% Split the data
-% n = length(ElGeneina.nvdi);
-
-model = ElGeneina.nvdi(1:453,1);         % 70% for modelling
-m_t = ElGeneina.nvdi_t(1:453,1);
-
-valid = ElGeneina.nvdi(454:584,1);       % 20% for validation
-v_t = ElGeneina.nvdi_t(454:584,1);
-
-test = ElGeneina.nvdi(584:end,1);        % 10% for test
-t_t = ElGeneina.nvdi_t(584:end,1); 
+% Normalizing the data
+y_all = ElGeneina.nvdi;
+y_t = ElGeneina.nvdi_t;
 
 max_data = 255;
 min_data = 0;
 
-m = 2*(model-min_data)/(max_data - min_data)-1;
-v = 2*(valid-min_data)/(max_data - min_data)-1;
-t = 2*(test-min_data)/(max_data - min_data)-1;
+y_all = 2*(y_all-min_data)/(max_data - min_data)-1;
 
-% Making a vector with modeling AND validation data, for prediction use
-m_v = [m; v];
-m_v_t = [m_t;v_t];
+% Split it 
+ym = y_all(1:453,1);         % 70% for modelling
+m_t = y_t(1:453,1);
 
-% Transformation of data 
-m_log = log(m);
-v_log = log(v);
-t_log = log(t);
-m_v_log = log(m_v);
+yv = y_all(454:584,1);       % 20% for validation
+v_t = y_t(454:584,1);
 
-plot(m_t, model);
-nbrLags = 50;
+yt = y_all(585:end,1);        % 10% for test
+t_t = y_t(585:end,1); 
 
-%% 3.3 Model B2 - NVDI prediction with rain as externalinput
+% Take the log
+y_log = log(y_all);
+ym_log = log(ym);
+yv_log = log(yv);
+yt_log = log(yt);
+
+% Useful for prediction
+ym_yv = [ym; yv]; 
+ym_yv_t = [m_t; v_t];
+ym_yv_log = log(ym_yv);
+
+modelLim = length(ym)+1; % Index for first data in validation set
+
+%% 3.3 Model B2 - NVDI prediction with rain as external input
+% Examine the rain data - is it Gaussian?
+close all; 
+clc; 
+
+load rain_kalman.mat;
+x_all = rain_kalman; 
+x_t = rain_kalman_t;         % From A, the reconstructed rain timeline 
+
+checkIfNormal(x_all,'Reconstructed rain','D',0.05)
+%bcNormPlot(x_all) % Suggests that taking the log might be a good idea
+
+%% 3.3 Model B2 - NVDI prediction with rain as external input
+% Log transformation
+
+constant = 1;
+x_log = log(x_all+constant);
+checkIfNormal(x_log,'Log rain','D',0.05) % Not perfect, but a lot better
+
+%% 3.3 Model B2 - NVDI prediction with rain as external input
 % Dividing the (input) rain data into the same modeling, validation and test data as (output) NVDI 
 % Dividing the x-data 
 clc
 close all
-
-load rain_kalman.mat;
 
 figure(1)
 subplot(2,1,1)
@@ -58,29 +77,27 @@ title('Reconstructed rain in Kalman')
 subplot(2,1,2)
 plot(ElGeneina.rain_org_t, ElGeneina.rain_org) 
 title('Original rain data')
-  
-x_all = rain_kalman;            % From A, the reconstructed rain
-rain_t = rain_kalman_t;         % From A, the reconstructed rain timeline 
-xm_t = rain_t(1:1245);          % Ensure both input and output model-data ends same date (1994). 
+ 
+xm_long_t = x_t(1:1246);          % Ensure both input and output model-data ends same date (1994). 
 
 % The time for model x will be longer than modeling y, as we have rain data from long before we have NVDI data. 
-xm = x_all(1:length(xm_t));
+xm_long = x_all(1:length(xm_long_t));
 
 % Make model rain data for same period as model NVDI data
-xm_real = xm(end-length(m_t)+1:end);
-xm_real_t = m_t; 
+xm = xm_long(end-length(m_t)+1:end);
+xm_t = m_t; 
 
 % Validation and test data should cover same time periods for both.
-xv = x_all(length(xm)+1:length(xm)+length(v_log));
+xv = x_all(modelLim:modelLim+length(v_t)-1);
 xv_t = v_t;                 % Should be the exact same time
 
-xt = x_all(length(xm)+length(xv):end);
+xt = x_all(end-length(t_t)+1:end);
 xt_t = t_t;
 
 % Making a vector with modeling AND validation data, for prediction use
-xm_xv = [xm_real; xv];
-xm_xv_t = [xm_real_t; xv_t];
-modelLim = length(xm_real)+1; % Index for the first validation data point
+xm_xv = [xm; xv];
+xm_xv_t = [xm_t; xv_t];
+modelLim = length(xm)+1; % Index for the first validation data point
 figure(2)
 plot(xm_xv_t, xm_xv);
 title('Modeling and validation data')
@@ -90,7 +107,7 @@ subplot(4,1,1)
 plot(rain_kalman_t, rain_kalman)
 title('Full reconstructed rain')
 subplot(4,1,2)
-plot(xm_t, xm)
+plot(m_t, xm)
 title('Modeling data, x')
 subplot(4,1,3)
 plot(v_t, xv)
@@ -98,6 +115,16 @@ title('Validation data, x')
 subplot(4,1,4)
 plot(t_t, xt)
 title('Test data, x') % Seems correct
+
+%% 3.3 Model B2 - NVDI prediction with rain as external input
+% Taking the log of the different parts
+clc
+close all
+
+xm_log = log(xm + constant);             
+xv_log = log(xv + constant);
+xt_log = log(xt + constant);
+xm_xv_log = log(xm_xv + constant);
 
 %% 3.3.1 Prewhitening of the precipitation data
 clc
@@ -108,26 +135,12 @@ close all
 % from xt to yt
 % We know xt is not white, thus we need to perform pre-whitening
 % Form an ARMA model of the input A3(z) xt = C3(z) wt
-% We may need to make x more Gaussian in order to fit an ARMA. (?)
-
-bcNormPlot(x_all)                                      % -> Log transformation might be useful 
-constant = 1; 
-xm_log = log(xm + constant);             
-xm_real_log = log(xm_real + constant);                       % Used!
-xv_log = log(xv + constant);
-xt_log = log(xt + constant);
-xm_xv_log = log(xm_xv + constant);
-
-basicPlot(xm_real_log, nbrLags, 'X model data')
-checkIfNormal(xm_real_log,'X model data');
-
-%% 3.3.1 Prewhitening of the precipitation data
 % Fitting an ARMA to A3 x = C3 et
 clc
 close all
 
-x = xm_real_log;
-
+x = xm_log;
+nbrLags = 50;
 A3 = [1 zeros(1,35) -1];
 C3 = [1 zeros(1,35) -1];
 model_init = idpoly(A3 ,[], C3);
@@ -154,14 +167,14 @@ checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 % Compute CCF eps and w, eps_t = H(z) * w_t + v_t
 close all;
 
-y = m_log;
+y = ym_log;
 
 % Simulate wt and eps_t
 eps_t = myFilter(c3a3.a, c3a3.c, y);
 w_t = myFilter(c3a3.a, c3a3.c, x);
 
-basicPlot(eps_t,50,'Eps_t');
-basicPlot(w_t,50,'W_t');
+%basicPlot(eps_t,50,'Eps_t');
+%basicPlot(w_t,50,'W_t');
 
 n = length(x); 
 
@@ -276,7 +289,7 @@ clc
 close all
 
 % Finding a good model to the data
-x = xm_real_log;
+x = xm_log;
 
 A3 = [1 zeros(1,35) -1];
 C3 = [1 zeros(1,9)];
@@ -302,27 +315,28 @@ save('input_arma.mat','c3a3')
 clc
 close all
 
-k = 3;                  % sets number of steps prediction
+k = 2;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
 [Fx, Gx] = polydiv(c3a3.c, c3a3.a, k);
 throw = max(length(Gx), length(c3a3.c));
 xhat_k = filter(Gx, c3a3.c, xm_xv_log);
+xhat_k_org = exp(xhat_k)-constant;
 
 figure
-plot([xm_xv_log xhat_k] )
+plot([xm_xv xhat_k_org] )
 line( [modelLim modelLim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
-legend('Log input rain', 'Predicted log rain', 'Prediction starts')
+legend('Reconstructed input rain', 'Predicted rain', 'Prediction starts')
 title( sprintf('Predicted input signal, x_{t+%i|t}', k) )
-axis([1 length(xm_xv_log) min(x)*1.5 max(x)*1.5])
+axis([1 length(xm_xv) min(xm_xv)*1.25 max(xm_xv)*1.25])
 
 %std_xk = sqrt( sum( Fx.^2 )*var_ex );
 %fprintf( 'The theoretical std of the %i-step prediction error is %4.2f.\n', k, std_xk)
 
 %% 3.3.2 Predict the input
 % Form the residual for the validation data. It should behave as an MA(k-1)
-ehat = xm_xv_log - xhat_k;
+ehat = xm_xv - xhat_k_org;
 ehat = ehat(modelLim:end);
 
 figure
@@ -359,18 +373,23 @@ KC = conv(model_B2.F,model_B2.C);
 [Fhh, Ghh] = polydiv(conv(Fy, KB), KC, k);
 
 % Form the predicted output signal using the predicted input signal.
-yhat_k  =  filter(Fhh, 1, xhat_k) + filter(Ghh, KC, xm_xv_log) + filter(Gy, KC, m_v_log); 
+yhat_k  =  filter(Fhh, 1, xhat_k) + filter(Ghh, KC, xm_xv_log) + filter(Gy, KC, ym_yv_log); 
 
-yhat_k_org = exp(yhat_k); 
+yhat_k_org = exp(yhat_k);
+%(1/2*(exp(yhat_k)+1)*(max_data - min_data))-min_data;
+% Inverse transform of 2*(y_all-min_data)/(max_data - min_data)-1;
 
 figure
-plot([m_v yhat_k_org] )
+plot([ym_yv yhat_k_org] )
 line( [modelLim modelLim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
-legend('Output signal', 'Predicted output', 'Prediction starts')
+legend('NVDI', 'Predicted NVDI', 'Prediction starts')
 title( sprintf('Predicted output signal, y_{t+%i|t}', k) )
-axis([1 length(m_v) min(m_v)*1.5 max(m_v)*1.5])
+axis([1 length(ym_yv) min(ym_yv)*1.25 max(ym_yv)*1.25])
 
-ehat = m_v - yhat_k_org;
+%% 3.3.3 Predicting NVDI with rain as external input
+% Checking the residuals
+
+ehat = ym_yv - yhat_k_org;
 ehat = ehat(modelLim:end);
 
 figure
@@ -379,4 +398,3 @@ title(sprintf('ACF of the %i-step output prediction residual', k) )
 checkIfWhite( ehat );
 pacfEst = pacf( ehat, noLags, 0.05 );
 checkIfNormal( pacfEst(k+1:end), 'PACF' );
-
