@@ -17,6 +17,12 @@ load proj23.mat
 model = ElGeneina.nvdi(1:453,1);         % 70% for modelling
 m_t = ElGeneina.nvdi_t(1:453,1);
 
+%%
+%bcNormPlot(model)
+bcNormPlot(ElGeneina.nvdi)
+checkIfNormal(ElGeneina.nvdi,'Full NVDI','D')
+checkIfNormal(log(ElGeneina.nvdi),'Full NVDI','D')
+%%
 valid = ElGeneina.nvdi(454:584,1);       % 20% for validation
 v_t = ElGeneina.nvdi_t(454:584,1);
 
@@ -30,10 +36,15 @@ m = 2*(model-min_data)/(max_data - min_data)-1;
 v = 2*(valid-min_data)/(max_data - min_data)-1;
 t = 2*(test-min_data)/(max_data - min_data)-1;
 
+% Making a vector with modeling AND validation data, for prediction use
+m_v = [m; v];
+m_v_t = [m_t;v_t];
+
 % Transformation of data 
 m_log = log(m);
 v_log = log(v);
 t_log = log(t);
+m_v_log = log(m_v);
 
 plot(m_t, model);
 nbrLags = 50;
@@ -72,7 +83,15 @@ xv_t = v_t;                 % Should be the exact same time
 xt = x_all(length(xm)+length(xv):end);
 xt_t = t_t;
 
+% Making a vector with modeling AND validation data, for prediction use
+xm_xv = [xm_real; xv];
+xm_xv_t = [xm_real_t; xv_t];
+modelLim = length(xm_real)+1; % Index for the first validation data point
 figure(2)
+plot(xm_xv_t, xm_xv);
+title('Modeling and validation data')
+
+figure(3)
 subplot(4,1,1)
 plot(rain_kalman_t, rain_kalman)
 title('Full reconstructed rain')
@@ -97,12 +116,13 @@ close all
 % Form an ARMA model of the input A3(z) xt = C3(z) wt
 % We may need to make x more Gaussian in order to fit an ARMA. (?)
 
-bcNormPlot(xm)                                      % -> Log transformation might be useful 
+bcNormPlot(x_all)                                      % -> Log transformation might be useful 
 constant = 1; 
 xm_log = log(xm + constant);             
 xm_real_log = log(xm_real + constant);                       % Used!
 xv_log = log(xv + constant);
 xt_log = log(xt + constant);
+xm_xv_log = log(xm_xv + constant);
 
 basicPlot(xm_real_log, nbrLags, 'X model data')
 checkIfNormal(xm_real_log,'X model data');
@@ -282,59 +302,43 @@ checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 % White? No! But lets move on :) 
 
 %% 3.3.2 Predict the input
+% Using the derived ARMA for predicting the input 
+
+clc
+close all
+
 k = 2;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
 [Fx, Gx] = polydiv(c3a3.c, c3a3.a, k);
 throw = max(length(Gx), length(c3a3.c));
-xhat_k = filter(Gx, c3a3.c, xv_log); % <-- Andreas använder hela sitt dataset, M och V i vårt fall. 
-%xhat_k = xhat_k(throw:end); % <-- Han kastar inte heller några samples :O
-
-% Transform prediction into original domain
-xhat_org = exp(xhat_k);
-
-% Create errors 
-%error = xv(throw:end) - xhat_org;
-error = xv - xhat_org;
-var(error)
-
-% Plot in original domain
-figure()
-hold on
-plot(xhat_org,'b');
-plot(xv);
-%plot(xv(throw:end));
-hold off
-basicPlot(error,noLags,'Errors') % 
-
-%% ANDREAS: Input prediction plot 
+xhat_k = filter(Gx, c3a3.c, xm_xv_log);
 
 figure
-plot([x' xhat_k'] )
-line( [453 453], [-1e1 1e1 ], 'Color','red','LineStyle',':' )
-legend('Input signal', 'Predicted input', 'Prediction starts')
+plot([xm_xv_log xhat_k] )
+line( [modelLim modelLim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
+legend('Log input rain', 'Predicted log rain', 'Prediction starts')
 title( sprintf('Predicted input signal, x_{t+%i|t}', k) )
-axis([1 600 min(x)*1.5 max(x)*1.5])
+axis([1 length(xm_xv_log) min(x)*1.5 max(x)*1.5])
 
-std_xk = sqrt( sum( Fx.^2 )*var_ex );
-fprintf( 'The theoretical std of the %i-step prediction error is %4.2f.\n', k, std_xk)
+%std_xk = sqrt( sum( Fx.^2 )*var_ex );
+%fprintf( 'The theoretical std of the %i-step prediction error is %4.2f.\n', k, std_xk)
 
-%% ANDREAS: Form the residual. Is it behaving as expected? Recall, no shift here!
-% Sen kollar han att det är en MA(k-1)
-ehat = x - xhatk;
+%% 3.3.2 Predict the input
+% Form the residual for the validation data. It should behave as an MA(k-1)
+ehat = xm_xv_log - xhat_k;
 ehat = ehat(modelLim:end);
 
 figure
-acf( ehat, noLags, 0.05, 1 );
+acf( ehat, nbrLags, 0.05, 1 );
 title( sprintf('ACF of the %i-step input prediction residual', k) )
 fprintf('This is a %i-step prediction. Ideally, the residual should be an MA(%i) process.\n', k, k-1)
 checkIfWhite( ehat );
-pacfEst = pacf( ehat, noLags, 0.05 );
+pacfEst = pacf( ehat, nbrLags, 0.05 );
 checkIfNormal( pacfEst(k+1:end), 'PACF' );
 
-
-%% Use the Box-Jenkins model for NVDI prediction
+%% 3.3.3 Predicting NVDI with rain as external input
 % We have the model on the form y = C/A1 et + B/A2 * xt_t and need it on
 % ARMAX form in order to make predictions
 % A1 A2 yt = A2 C1 et + A1 B z^-d x
@@ -359,22 +363,23 @@ KC = conv(model_B2.F,model_B2.C);
 [Fhh, Ghh] = polydiv(conv(Fy, KB), KC, k);
 
 % Form the predicted output signal using the predicted input signal.
-%yhat_k  =  filter(Fhh, 1, xhat_k) + filter(Ghh, KC, x) + filter(Gy, KC, y); % Problem att xhat är kortare än x och y. 
-% Om vi vill göra samma som Andreas borde xhat vara gjord på M+V, samt x = M+v, Y = M+V. 
+yhat_k  =  filter(Fhh, 1, xhat_k) + filter(Ghh, KC, xm_xv_log) + filter(Gy, KC, m_v_log); 
+
+yhat_k_org = exp(yhat_k); 
 
 figure
-plot([y' yhat_k'] )
-line( [length(y) length(y)], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
+plot([m_v yhat_k_org] )
+line( [modelLim modelLim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
 legend('Output signal', 'Predicted output', 'Prediction starts')
 title( sprintf('Predicted output signal, y_{t+%i|t}', k) )
-axis([1 length(x_all) min(y)*1.5 max(y)*1.5])
+axis([1 length(m_v) min(m_v)*1.5 max(m_v)*1.5])
 
-ehat = y - yhatk;
+ehat = m_v - yhat_k_org;
 ehat = ehat(modelLim:end);
 
 figure
-acf( ehat, noLags, 0.05, 1 );
-title( sprintf('ACF of the %i-step output prediction residual', k) )
+acf(ehat, noLags, 0.05, 1);
+title(sprintf('ACF of the %i-step output prediction residual', k) )
 checkIfWhite( ehat );
 pacfEst = pacf( ehat, noLags, 0.05 );
 checkIfNormal( pacfEst(k+1:end), 'PACF' );

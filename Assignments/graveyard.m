@@ -428,3 +428,51 @@ sum(rain_kalman)
 sum(x_sim)
 sum(v)
 
+%% Hannas prediction av x på B2 (med mina comments / Amanda)
+clc
+close all
+
+k = 2;                  % sets number of steps prediction
+noLags = 50;
+
+% Solve the Diophantine equation and create predictions
+[Fx, Gx] = polydiv(c3a3.c, c3a3.a, k);
+throw = max(length(Gx), length(c3a3.c));
+xhat_k = filter(Gx, c3a3.c, xm_xv_log); % <-- Andreas använder hela sitt dataset, M och V i vårt fall. 
+%xhat_k = xhat_k(throw:end); % <-- Han kastar inte heller några samples :O
+
+% Transform prediction into original domain
+xhat_org = exp(xhat_k);
+
+% Create errors 
+%error = xv(throw:end) - xhat_org;
+error = xv - xhat_org;
+var(error)
+
+% Plot in original domain
+figure()
+hold on
+plot(xhat_org,'b');
+plot(xv);
+%plot(xv(throw:end));
+hold off
+basicPlot(error,noLags,'Errors') % 
+
+%% Continued
+
+% Transform prediction into original domain
+xhat_org = exp(xhat_k)+constant;
+
+% Create errors 
+%error = xv(throw:end) - xhat_org;
+error = xv - xhat_org(modelLim:end);
+var(error)
+
+% Plot in original domain
+figure()
+hold on
+plot(xhat_org,'b');
+plot(xv);
+%plot(xv(throw:end));
+hold off
+basicPlot(error,noLags,'Errors') % 

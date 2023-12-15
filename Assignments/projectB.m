@@ -87,6 +87,8 @@ plot(m_t,m)
 close all; 
 clc; 
 
+% WE NEED TO SEE IF LOG IS THE RIGHT WAY TO GO
+
 checkIfNormal(m,'modelling data')
 subplot(121)
 lambda_B1 = bcNormPlot(m)
