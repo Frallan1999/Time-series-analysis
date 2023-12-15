@@ -44,11 +44,11 @@ n = length(ElGeneina.nvdi);
 ym = y(1:453,1);         % 70% for modelling
 m_t = y_t(1:453,1);
 
-yv = ElGeneina.nvdi(454:584,1);       % 20% for validation
+yv = y(454:584,1);       % 20% for validation
 v_t = y_t(454:584,1);
 
-yt = ElGeneina.nvdi(584:end,1);        % 10% for test
-t_t = y_t(584:end,1); 
+yt = y(585:end,1);        % 10% for test
+t_t = y_t(585:end,1); 
 
 % Plot it
 figure(2)
@@ -94,6 +94,7 @@ bcNormPlot(y) % Suggests that taking the log might be a good idea
 close all; 
 clc; 
 
+s
 y_log = log(y);
 checkIfNormal(y_log,'Log normalized NVDI','D',0.05) % Did the trick!
 
@@ -106,8 +107,10 @@ ym_log = log(ym);
 yv_log = log(yv);
 yt_log = log(yt);
 ym_yv = [ym; yv]; % Useful for prediction
+ym_yv_t = [m_t; v_t];
 ym_yv_log = log(ym_yv);
-modelLim = length(ym)+1; % Fi
+modelLim = length(ym)+1; % Index for first data in validation set
+plot(ym_yv_t, ym_yv)
 
 %%  3.2 Model B1 - NVDI prediction without external input
 % Differentiation of the data; 
@@ -262,10 +265,11 @@ plotNTdist(res.y);
 % All significant, however, t-distributed residuals
 
 %% 3.2.2. Model prediction
+% Predict the vegetation using the derived final model
 clc
 close all
 
-k = 3;                  % sets number of steps prediction
+k = 7;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
@@ -273,18 +277,30 @@ noLags = 50;
 throw = max(length(Gx), length(model_B1.c));
 yhat_k = filter(Gx, model_B1.c, ym_yv_log);
 
+yhat_k_org = exp(yhat_k);
+
 figure
-plot([ym_yv_log yhat_k] )
+plot([ym_yv yhat_k_org] )
 line( [modelLim modelLim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
-legend('Log input rain', 'Predicted log rain', 'Prediction starts')
-title( sprintf('Predicted input signal, x_{t+%i|t}', k) )
-axis([1 length(xm_xv_log) min(x)*1.5 max(x)*1.5])
+legend('NVDI', 'Predicted NVDI', 'Prediction starts')
+title( sprintf('Predicted NVDI, y_{t+%i|t}', k) )
+axis([1 length(ym_yv) min(ym_yv)*1.5 max(ym_yv)*1.5])
 
 %std_xk = sqrt( sum( Fx.^2 )*var_ex );
 %fprintf( 'The theoretical std of the %i-step prediction error is %4.2f.\n', k, std_xk)
 
+%% 3.2.2 Model prediction
+% Form the residual for the validation data. It should behave as an MA(k-1)
+ehat = ym_yv - yhat_k_org;
+ehat = ehat(modelLim:end);
 
-
+figure
+acf( ehat, nbrLags, 0.05, 1 );
+title( sprintf('ACF of the %i-step prediction residual', k) )
+fprintf('This is a %i-step prediction. Ideally, the residual should be an MA(%i) process.\n', k, k-1)
+checkIfWhite( ehat );
+pacfEst = pacf( ehat, nbrLags, 0.05 );
+checkIfNormal( pacfEst(k+1:end), 'PACF' );
 
 %% HANNA ->
 %% 3.2.2. Model prediction
@@ -361,91 +377,3 @@ conf = 2*sqrt(theoretical_variance);
 conf_int = [0-conf, 0+conf]
 error_outside = (sum(error_org>conf_int(2)) + sum(error_org<conf_int(1)))/length(error_org)
 
-%% Create naive model 
-% Lets say vegetation is the same as 1 year ago  
-close all; 
-clc; 
-
-noLags = 50; 
-A = [1 zeros(1,35) 1];
-C = [1];
-
-model_naive = idpoly(A, [], C);
-present(model_naive);
-
-%% Test naive model on validation data (ver2)
-close all; 
-yhat_k = filter(model_naive.a, model_naive.c, v); % Borde vi inte skicka in e här? 
-yhat_k = yhat_k(length(model_naive.a):end)
-error_org = v(length(model_naive.a):end) - yhat_k;
-var(error_org)   % 0.0043
-
-figure()
-hold on
-plot(yhat_k,'g');
-plot(v(length(model_naive.a):end));
-hold off
-basicPlot(error_org,noLags,'Original domain not shifted')
-
-hold on
-plot(yhat_naive)
-plot(ElGeneina.nvdi)
-legend('Naive model', 'Full NVDI data set')
-hold off
-
-%% Test naive model on test data (ver2)
-close all; 
-yhat_k = filter(model_naive.a, model_naive.c, t);
-yhat_k = yhat_k(length(model_naive.a):end)
-error_org = t(length(model_naive.a):end) - yhat_k;
-var(error_org)   % 0.0076
-
-figure()
-hold on
-plot(yhat_k,'g');
-plot(t(length(model_naive.a):end));
-hold off
-% basicPlot(error_org,noLags,'Original domain not shifted')
-
-
-%% Test naive model on validation data
-close all; 
-clc; 
-k = 37;                  % sets number of steps prediction
-% very bad with k less than 37!!!
-
-% Solve the Diophantine equation and create predictions
-[Fk, Gk] = polydiv(model_naive.c, model_naive.a, k);
-throw = max(length(Gk), length(model_naive.c));
-yhat_k = filter(Gk, model_naive.c, v);
-yhat_k = yhat_k(throw:end);
-
-% It can be seen that the shift is IN GENERAL this (and is fun to then
-% incorporate to be able to plot for both shifted and non shifted
-if k == 1 || k == 2
-    shift = k; 
-else 
-    shift = 3; 
-end
-
-% Create the errors (shifted and unshifted, original domain vs not) 
-error_org_shifted = v(throw:end-shift) - yhat_k(1+shift:end);
-error_org = v(throw:end) - yhat_k;
-var(error_org)
-var(error_org_shifted)
-
-% Original domain plot (not shifted)
-figure()
-hold on
-plot(yhat_k,'g');
-plot(v(throw:end));
-hold off
-basicPlot(error_org,noLags,'Original domain not shifted')
-
-% Original domain plot (shifted)
-figure()
-hold on
-plot(yhat_k(1+shift:end),'g');
-plot(v(throw:end-shift));
-hold off
-basicPlot(error_org,noLags,'Original domain')

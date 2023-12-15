@@ -169,6 +169,7 @@ whitenessTest(res.y);
 checkIfNormal(res.y,'Residuals for AR(1)');
 plotNTdist(res.y);
 
+
 % FPE: 0.04411 and Monti: 28.47 < 36.42
 % OBS! Residual not normal --> can't 100 procent trust result.
 % The residual is however t-dstriuted, even wider confidence interval for
@@ -252,12 +253,12 @@ model_init.Structure.a.Free = [0 1 zeros(1,34) 1 0];
 model_init.Structure.c.Free = [zeros(1,3) 1];            
 model_B1 = pem(ym_log_d, model_init);                     
 res = resid(model_B1, ym_log_d);
-plotACFnPACF(res.y, noLags, "Residual for SARIMA modelling");
+plotACFnPACF(res.y, noLags, "Residual for SARIMA model");
 
 figure()
 present(model_B1);
 whitenessTest(res.y);
-checkIfNormal(res.y,'Residuals from SARIMA modelling');
+checkIfNormal(res.y,'Residuals for SARIMA model');
 plotNTdist(res.y);
 % FPE: 0.04658 and Monti: 8.89 < 36.42
 % Best one so far

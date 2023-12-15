@@ -55,7 +55,7 @@ x_all = rain_kalman;
 x_t = rain_kalman_t;         % From A, the reconstructed rain timeline 
 
 checkIfNormal(x_all,'Reconstructed rain','D',0.05)
-bcNormPlot(x_all) % Suggests that taking the log might be a good idea
+%bcNormPlot(x_all) % Suggests that taking the log might be a good idea
 
 %% 3.3 Model B2 - NVDI prediction with rain as external input
 % Log transformation
