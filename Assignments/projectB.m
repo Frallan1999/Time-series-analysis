@@ -87,18 +87,19 @@ plot(m_t,m)
 close all; 
 clc; 
 
-% WE NEED TO SEE IF LOG IS THE RIGHT WAY TO GO
+% WE NEED TO SEE IF LOG IS THE RIGHT WAY TO GO --> FULL was previously m!!!!!!
+full = ElGeneina.nvdi;
 
-checkIfNormal(m,'modelling data')
+checkIfNormal(full,'modelling data')
 subplot(121)
-lambda_B1 = bcNormPlot(m)
+lambda_B1 = bcNormPlot(full)
 title('Box-Cox normality plot for modelling data')
 fprintf(['The Box-Cox curve is maximized at %4.2f.\n'], lambda_B1)
 subplot(122)
-normplot(m)
+normplot(full)
 
 % Lets try with the log of the data (option 1)
-m_log = log(m);
+m_log = log(full);
 checkIfNormal(m_log,'modelling data');
 figure();
 plot(m_log);

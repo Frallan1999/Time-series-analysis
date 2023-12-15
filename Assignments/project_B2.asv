@@ -294,7 +294,7 @@ checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 % plotNTdist(res.y);
 
 % White? No! But lets move on :) 
-save('input_arma.mat','c3a3')
+save ()
 
 %% 3.3.2 Predict the input
 % Using the derived ARMA for predicting the input 
