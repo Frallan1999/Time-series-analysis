@@ -102,12 +102,14 @@ input_arma = c3a3;
 close all;
 clc; 
 
+% Data to put into Kalman
 y_input = [xm_real_log;xv_log;xt_log];
 N = length(y_input);      % all data??? Is this really correct 
 
-k = 2;                                  % Prediction step 
-q0 = nnz(input_arma.a) -1               % (3) - Number of unknowns in the A polynomial 
-p0 = nnz(input_arma.c) -1               % (4) - Number of unknowns in the C polynomial 
+% Prediction step and number unknownd
+k = 9;                                  % Prediction step 
+q0 = nnz(input_arma.a) - 1              % (3) - Number of unknowns in the A polynomial 
+p0 = nnz(input_arma.c) - 1              % (4) - Number of unknowns in the C polynomial 
 
 % Define the state space equations.
 A = eye(p0+q0);                         % p0 + q0 are number of hidden states 
@@ -115,66 +117,56 @@ Rw = 0.2;                               % Try different! Measurement noise covar
 Re = 1e-6*eye(p0+q0);                   % Try different! System noise covariance matrix. 
 
 % Set initial values
-Rx_t1 = eye(p0+q0);                     % Initial covariance matrix, R_{1|0}^{x,x}, large -> small trust initial values 
-Rx_k  = Rx_t1;
-% xt_t1 = [0 0]';                       % Initial state values
+xt_t = [-0.1626 -0.2716 -0.5327 0.1276 0.3341 -0.2683 0.2605]';    
+Rxt_t1 = 10*eye(p0+q0);                 % Initial covariance matrix, IF large -> small trust initial values 
 
 % Storing values 
-xt = zeros(p0+q0,N);                    % Stored states
+Xsave = zeros(p0+q0,N-k);               % Stored (hidden) states
 ehat = zeros(1,N);                      % One-step prediction residual
-yhat = zeros(N-k,1);                    % Estimated output ({yhat}_{t|t-1}) (not one step prediction)  
-yhatk = zeros(N-k,1);                   % Estimated k-step prediction
+yhat = zeros(N,1);                      % Estimated output ({yhat}_{t|t-1}) (NOT one step prediction)  
+yhatk = zeros(N,1);                     % Estimated k-step prediction
+
+y_t_input = zeros(1,N);                 
 
 xStd  = zeros(p0+q0,N-k);               % Stores one std for the one-step prediction.
 xStdk = zeros(p0+q0,N-k);               % Stores one std for the k-step prediction.
 
-for t=37:N-k                          % Starts at 37 as we use t-36
+for t=37:N-k                            % Starts at 37 as we use t-36
     % Update the predicted state and the time-varying state vector.
-    x_t1 = A*xt(:,t-1);                                                           % x_{t|t-1} = A x_{t-1|t-1}
-    Ct  = [ -y_input(t-1) -y_input(t-2) -y_input(t-36) ehat(t-1) ehat(t-2) ehat(t-6) ehat(t-9)];     % C_{t|t-1}
+    xt_t1 = A*xt_t;                     % x_{t|t-1} = A x_{t-1|t-1}
+    Ct = [ -y_input(t-1) -y_input(t-2) -y_input(t-36) ehat(t-1) ehat(t-2) ehat(t-6) ehat(t-9)];     % C_{t|t-1}
     
     % Update the parameter estimates.
-    Ry = Ct * Rx_t1 * Ct' + Rw;         % R^yy_{t | t-1} = C R^xx_{t|t-1} + Rw
-    Kt = Rx_t1 * Ct' / Ry;              % K_t = R^xx{t| t-1} * Ct' * inv(Ryy{t | t-1})
+    Ryt_t1 = Ct * Rxt_t1 * Ct' + Rw;    % R^yy_{t | t-1} = C R^xx_{t|t-1} + Rw
+    Kt = Rxt_t1 * Ct' / Ryt_t1;         % K_t = R^xx{t| t-1} * Ct' * inv(Ryy{t | t-1})
     yhat(t) = Ct*x_t1;                  % One step prediction - y{t|t-1}
     ehat(t) = y_input(t)-yhat(t);       % One step prediction error - e_t = y_t - y_{t | t-1}
-    xt(:,t) = x_t1 + Kt*ehat(t);        % x_{t | t}
+    xt_t = xt_t1 + Kt*ehat(t);          % x_{t | t}
     
     % Update the covariance matrix estimates
-    Rx_t  = Rx_t1 - Kt*Ry*Kt';                  % R^{x,x}_{t|t} = R^{x,x}_{t|t-1} - K_t R_{t|t-1}^{y,y} K_t^T
-    Rx_t1 = A*Rx_t*A' + Re;                     % R^{x,x}_{t+1|t} = A R^{x,x}_{t|t} A^T + Re
+    Rxt_t  = Rxt_t1 - Kt*Ryt_t1*Kt';    % R^{x,x}_{t|t} = R^{x,x}_{t|t-1} - K_t R_{t|t-1}^{y,y} K_t^T
+    Rxt1_t = A*Rxt_t*A' + Re;           % R^{x,x}_{t+1|t} = A R^{x,x}_{t|t} A^T + Re
 
-    % One step --> Form the k-step prediction by first constructing the future C vector
-    % and the one-step prediction. Note that this is not yhat(t) above, as
-    % this is {yhat}_{t|t-1}.
-    Ck = [ -y_input(t) -y_input(t-1) -y_input(t-35) ehat(t) ehat(t-1) ehat(t-5) ehat(t-8)];        % C_{t+1|t}
-    yk = Ck*xt(:,t);                          % {yhat}_{t+1|t} = C_{t+1|t} A x_{t|t}
+    y_t_input(1:t) = y_input(1:t);      % Store all values known at t 
 
-    y_input_pred(1:t) = y_input(1:t);          % Store values until t in new vector to be updated
-
-    % Note that the k-step predictions is formed using the k-1, k-2, ...
-    % predictions, with the predicted future noises being set to zero. If
-    % the ARMA has a higher order AR part, one needs to keep track of each
-    % of the earlier predicted values.
-    Rx_k = Rx_t1;
+    % Form redictions 
     for k0=1:k
-        Ck = [ -y_input_pred(t-1+k0) -y_input_pred(t-2+k0) -y_input_pred(t-36+k0) ehat(t+k0-1) ehat(t+k0-2) ehat(t+k0-6) ehat(t+k0-9)]; % C_{t+k|t}
-        y_input_pred(t+k0) = Ck*A^k*xt(:,t);                    % \{yhat}_{t+k|t} = C_{t+k|t} A^k x_{t|t}
-        Rx_k = A*Rx_k*A' + Re;                                     % R_{t+k+1|t}^{x,x} = A R_{t+k|t}^{x,x} A^T + Re  
+        Ck = [ -y_t_input(t-1+k0) -y_t_input(t-2+k0) -y_t_input(t-36+k0) ehat(t+k0-1) ehat(t+k0-2) ehat(t+k0-6) ehat(t+k0-9)]; % C_{t+k|t}
+        y_t_input(t+k0) = Ck*A^k0*xt_t;  % \{yhat}_{t+k|t} = C_{t+k|t} A^k x_{t|t}
     end
-   
-    yhatk(t+k) = y_input_pred(t+k);                            
+
+    yhatk(t+k) = y_input_pred(t+k0);  
+    Xsave(:,t) = xt_t;
+
 
     % Estimate a one std confidence interval of the estimated parameters.
     xStd(:,t) = sqrt( diag(Rx_t) );             % This is one std for each of the parameters for the one-step prediction.
     xStdk(:,t) = sqrt( diag(Rx_k) );            % This is one std for each of the parameters for the k-step prediction.
 end
 
-% Original domain!!!
-real_inp_pred = exp(yhatk); 
-error = real
-
-
+% Change to original domain!
+yhatk_org = exp(yhat) - constant; 
+% error = real
 
 %% Show the one-step prediction. 
 figure
@@ -205,3 +197,4 @@ fprintf('  The variance of the %i-step prediction residual is %5.2f.\n', k, var(
 
 %% Simulate data for testing 
 A_sim = input_arma.a;
+C_sim = input_arma.c;
