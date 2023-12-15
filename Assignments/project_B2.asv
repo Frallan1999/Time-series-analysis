@@ -295,27 +295,26 @@ xhat_k = filter(Gx, c3a3.c, xv_log); % <-- Andreas använder hela sitt dataset, 
 xhat_org = exp(xhat_k);
 
 % Create errors 
-%error = xv(throw:end) - xhat_org;
+error = xv(throw:end) - xhat_org;
 error = xv - xhat_org;
 var(error)
 
 % Plot in original domain
 figure()
 hold on
-plot(xhat_org,'b');
-plot(xv);
-%plot(xv(throw:end));
+plot(xhat_org,'g');
+plot(xv(throw:end));
 hold off
-basicPlot(error,noLags,'Errors') % 
+basicPlot(error,noLags,'Errors')
 
 %% ANDREAS: Input prediction plot 
 
 figure
-plot([x' xhat_k'] )
-line( [453 453], [-1e1 1e1 ], 'Color','red','LineStyle',':' )
+plot([x xhatk] )
+line( [modelLim modelLim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
 legend('Input signal', 'Predicted input', 'Prediction starts')
 title( sprintf('Predicted input signal, x_{t+%i|t}', k) )
-axis([1 600 min(x)*1.5 max(x)*1.5])
+axis([1 N min(x)*1.5 max(x)*1.5])
 
 std_xk = sqrt( sum( Fx.^2 )*var_ex );
 fprintf( 'The theoretical std of the %i-step prediction error is %4.2f.\n', k, std_xk)
