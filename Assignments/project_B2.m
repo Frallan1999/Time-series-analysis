@@ -160,23 +160,14 @@ plot(-M:M, 2/sqrt(n)*ones(1,2*M+1), 'r--')
 plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--') 
 hold off
 
-% BEFORE 
-% r (A2 order): exponential decay suggests 0
-% d (delay for B): could be 4
-% s (order for B after delay): 0 
-
-% r = 2
-% d = 2
-% s = 2 
-
+% r (A2 order): ringing suggests 2
+% d (delay for B): 2
+% s (order for B after delay): 2
 
 %% 3.3.2 Box Jenkins 
-% Testing model orders for A2 and B
-d = 4;                                      % To be updated
+% Testing model orders for A2 and B                               
 A2 = [1 0 0]; 
-B =  [0 0 1 0];
-% A2 = [1];
-% B = [0 0 0 0 1];
+B =  [0 0 1 0];     % Removed insignificant 2nd order 
 
 Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
 z = iddata(y,x);    
@@ -197,7 +188,7 @@ plot(-M:M, 2/sqrt(n)*ones(1,2*M+1), 'r--')
 plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--') 
 hold off
 
-% Etilde doesn't have to be white --> we have only modeled half of BJ
+% Looks quite horrible, however we will move on
 % Next step is to derive orders of C1 and A1 from etilde = C1 / A1 et -->
 % ARMA 
 
@@ -208,40 +199,40 @@ clc;
 basicPlot(etilde.y,nbrLags,'etilde, look for A1 and C1');
 
 A1 = [1 zeros(1,35) -1] ; 
-% C1 = [1 zeros(1,5) -1];
 C1 = [1 0 1];
 model_init = idpoly (A1, [], C1);
 model_init.Structure.a.Free = [0 1 zeros(1,34) 1];
 model_init.Structure.c.Free = [0 0 1];
 
-% model_init.Structure.a.Free = [0 1 1 zeros(1,3) 0 zeros(1,29) 1];
-% model_init.Structure.c.Free = [0 0 1 zeros(1,3) 1];
 etilde_data = iddata(etilde.y);
 a1c1 = pem(etilde_data,model_init); 
 present(a1c1)
 res_tilde = resid (a1c1, etilde_data);
-basicPlot(res_tilde.y,nbrLags,'ARMA(1,0)');
+basicPlot(res_tilde.y,nbrLags,'ARMA(A1,C1)');
 checkIfNormal(res_tilde.y, 'residual e tilde');
 whitenessTest(res_tilde.y);
+
+% White enough, moving on
 
 %% 3.3.2 Box Jenkins
 % Reestimate the full model with pem (as model will change when we do it all together) 
 close all;
 clc; 
 
-% B = [zeros(1,7) 1 zeros(1,3)];
-% A2 = [1 0 0];
-% B = [1 0 0 0]
+%AMANDA's EDITS
+C1 = 1;         % Removal of insignificant variables
+% END
+
 Mi = idpoly(1, B, C1, A1, A2);
 Mi.Structure.D.Free = [0 1 zeros(1,34) 1];  % VA?
-Mi.Structure.C.Free = [0 0 1];
+%Mi.Structure.C.Free = [0 0 1];
 %Mi.Structure.F.Free = [0 0 1];
-MboxJ = pem(z,Mi);
-present(MboxJ)
-ehat = resid(MboxJ,z);      % the estimate of the noise process e_t
+model_B2 = pem(z,Mi);
+present(model_B2)
+ehat = resid(model_B2,z);      % the estimate of the noise process e_t
 
 %% 3.3.2 Box Jenkins
-% Final analysis of ehat - is the entier model good enough?
+% Final analysis of ehat - is the entire model good enough?
 close all;
 clc; 
 
@@ -289,34 +280,101 @@ checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 % plotNTdist(res.y);
 
 % White? No! But lets move on :) 
+
 %% 3.3.2 Predict the input
 k = 2;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
-[Fk, Gk] = polydiv(c3a3.c, c3a3.a, k);
-throw = max(length(Gk), length(c3a3.c));
-yhat_k = filter(Gk, c3a3.c, xv_log);
-yhat_k = yhat_k(throw:end);
+[Fx, Gx] = polydiv(c3a3.c, c3a3.a, k);
+throw = max(length(Gx), length(c3a3.c));
+xhat_k = filter(Gx, c3a3.c, xv_log); % <-- Andreas använder hela sitt dataset, M och V i vårt fall. 
+xhat_k = xhat_k(throw:end);
 
 % Transform prediction into original domain
-yhat_k_org = exp(yhat_k);
+xhat_org = exp(xhat_k);
 
 % Create errors 
-error = xv(throw:end) - yhat_k_org;
+error = xv(throw:end) - xhat_org;
 var(error)
 
 % Plot in original domain
 figure()
 hold on
-plot(yhat_k_org,'g');
+plot(xhat_org,'g');
 plot(xv(throw:end));
 hold off
 basicPlot(error,noLags,'Errors')
 
+%% ANDREAS: Input prediction plot 
+
+figure
+plot([x xhatk] )
+line( [modelLim modelLim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
+legend('Input signal', 'Predicted input', 'Prediction starts')
+title( sprintf('Predicted input signal, x_{t+%i|t}', k) )
+axis([1 N min(x)*1.5 max(x)*1.5])
+
+std_xk = sqrt( sum( Fx.^2 )*var_ex );
+fprintf( 'The theoretical std of the %i-step prediction error is %4.2f.\n', k, std_xk)
+
+%% ANDREAS: Form the residual. Is it behaving as expected? Recall, no shift here!
+% Sen kollar han att det är en MA(k-1)
+ehat = x - xhatk;
+ehat = ehat(modelLim:end);
+
+figure
+acf( ehat, noLags, 0.05, 1 );
+title( sprintf('ACF of the %i-step input prediction residual', k) )
+fprintf('This is a %i-step prediction. Ideally, the residual should be an MA(%i) process.\n', k, k-1)
+checkIfWhite( ehat );
+pacfEst = pacf( ehat, noLags, 0.05 );
+checkIfNormal( pacfEst(k+1:end), 'PACF' );
+
+
 %% Use the Box-Jenkins model for NVDI prediction
+% We have the model on the form y = C/A1 et + B/A2 * xt_t and need it on
+% ARMAX form in order to make predictions
+% A1 A2 yt = A2 C1 et + A1 B z^-d x
 
+% Let KA yt = KC et + KB xt form an ARMA process 
+% KA = A1 A2 (F * D in idpoly --> A in ARMA) 
+% KB = A1 B (D * B in idpoly --> B in ARMA)
+% KC = A2 C1 (F * C in idpoly --> C in ARMA)
 
+clc 
+close all
 
+KA = conv(model_B2.F,model_B2.D);
+KB = conv(model_B2.D, model_B2.B);
+KC = conv(model_B2.F,model_B2.C);
 
+% Form the ARMA prediction for y_t (note that this is not the same G
+% polynomial as we computed above (that was for x_t, this is for y_t).
+[Fy, Gy] = polydiv(model_B2.C, model_B2.D, k);
 
+% Compute the \hat\hat{F} and \hat\hat{G} polynomials.
+[Fhh, Ghh] = polydiv(conv(Fy, KB), KC, k);
+
+% Form the predicted output signal using the predicted input signal.
+%yhat_k  =  filter(Fhh, 1, xhat_k) + filter(Ghh, KC, x) + filter(Gy, KC, y); % Problem att xhat är kortare än x och y. 
+% Om vi vill göra samma som Andreas borde xhat vara gjord på M+V, samt x = M+v, Y = M+V. 
+
+figure
+plot([y' yhat_k'] )
+line( [length(y) length(y)], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
+legend('Output signal', 'Predicted output', 'Prediction starts')
+title( sprintf('Predicted output signal, y_{t+%i|t}', k) )
+axis([1 length(x_all) min(y)*1.5 max(y)*1.5])
+
+ehat = y - yhatk;
+ehat = ehat(modelLim:end);
+
+figure
+acf( ehat, noLags, 0.05, 1 );
+title( sprintf('ACF of the %i-step output prediction residual', k) )
+checkIfWhite( ehat );
+pacfEst = pacf( ehat, noLags, 0.05 );
+checkIfNormal( pacfEst(k+1:end), 'PACF' );
+
+% Det här ser ut som fan. 
