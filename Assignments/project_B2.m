@@ -136,8 +136,7 @@ close all
 % We know xt is not white, thus we need to perform pre-whitening
 % Form an ARMA model of the input A3(z) xt = C3(z) wt
 % Fitting an ARMA to A3 x = C3 et
-clc
-close all
+
 
 x = xm_log;
 nbrLags = 50;
@@ -246,7 +245,6 @@ whitenessTest(res_tilde.y);
 close all;
 clc; 
 
-%AMANDA's EDITS
 C1 = 1;         % Removal of insignificant variables
 % END
 
@@ -311,7 +309,6 @@ save('input_arma.mat','c3a3')
 
 %% 3.3.2 Predict the input
 % Using the derived ARMA for predicting the input 
-
 clc
 close all
 
@@ -336,6 +333,9 @@ axis([1 length(xm_xv) min(xm_xv)*1.25 max(xm_xv)*1.25])
 
 %% 3.3.2 Predict the input
 % Form the residual for the validation data. It should behave as an MA(k-1)
+clc
+close all
+
 ehat = xm_xv - xhat_k_org;
 ehat = ehat(modelLim:end);
 
@@ -356,7 +356,6 @@ checkIfNormal( pacfEst(k+1:end), 'PACF' );
 % KA = A1 A2 (F * D in idpoly --> A in ARMA) 
 % KB = A1 B (D * B in idpoly --> B in ARMA)
 % KC = A2 C1 (F * C in idpoly --> C in ARMA)
-
 clc 
 close all
 
@@ -388,6 +387,8 @@ axis([1 length(ym_yv) min(ym_yv)*1.25 max(ym_yv)*1.25])
 
 %% 3.3.3 Predicting NVDI with rain as external input
 % Checking the residuals
+clc
+close all
 
 ehat = ym_yv - yhat_k_org;
 ehat = ehat(modelLim:end);
