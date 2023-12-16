@@ -112,8 +112,8 @@ close all;
 clc; 
 
 % Data to put into Kalman
-% yx_input = [xm_log];                  % Here only modelling
-yx_input = sim_rain;                    % Change here fort testing simulated data
+yx_input = [xm_xv_log];                  
+% yx_input = sim_rain;                   % Change here fort testing simulated data
 N = length(yx_input);      
 
 % Prediction step and number unknownd
@@ -184,13 +184,17 @@ figure()
 % trueParams = [-0.1626 -0.2716 -0.5327 0.1276 0.3341 -0.2683 0.2605];   % For simulated data
 % plotWithConf( (1:N-k), Xsave', xStd', trueParams);                     % For simulated data
 plotWithConf( (1:N-k), Xsave', xStd');
-legend('a1', 'a2', 'a36', 'c1', 'c2', 'c7', 'c9')
+legend('a1', 'a2', 'a36', 'c1', 'c2', 'c7', 'c9') 
 title('Estimated states for input data rain')
 xlim([37 N-k])
 
 figure()
+hold on 
 plot(Xsave(:,50:end)')
+xline(modelLim-50, 'r--', 'LineWidth', 1, 'Label','');
 legend('a1', 'a2', 'a36', 'c1', 'c2', 'c7', 'c9')
+xlim([1, length(Xsave)-50]);
+hold off
 
 %% Plot k step prediction in "right" domain
 close all; 
@@ -199,20 +203,20 @@ yx_input_org = exp(yx_input)-constant;
 yxhatk_org = exp(yxhatk)-constant;
 
 figure()
-plot( [yx_input(37:end) yxhatk(37:end)] ) 
+plot( [yx_input(modelLim:end) yxhatk(modelLim:end)] ) 
 title( sprintf('%i-step prediction using the Kalman filter wrong domain', k) )
 xlabel('Time')
 legend('Realisation', 'Kalman estimate', 'Location','SW')
-% xlim([1 N-k])
+xlim([1 length(yx_input(modelLim:end))])
 
 figure()
-plot( [yx_input_org(37:end) yxhatk_org(37:end)] )
-title( sprintf('%i-step prediction using the Kalman filter in original domain', k) )
+plot( [yx_input_org(modelLim:end) yxhatk_org(modelLim:end)] ) 
+title( sprintf('%i-step prediction using the Kalman filter original domain', k) )
 xlabel('Time')
 legend('Realisation', 'Kalman estimate', 'Location','SW')
-% xlim([1 N-k])
+xlim([1 length(yx_input(modelLim:end))])
 
-error = yx_input_org(70:end)-yxhatk_org(70:end); 
+error = yx_input_org(modelLim+20:end)-yxhatk_org(modelLim+20:end); 
 plotACFnPACF(error, 40, 'Prediction using the Kalman filter');
 checkIfWhite(error);              % Only relevant for 1 step prediction
 
@@ -235,10 +239,10 @@ close all;
 clc; 
 
 % Data to put into Kalman
-% yx_input = xm_log;
-% y_input = ym_log;
-y_input = sim_nvdi;                     % Change here for testing simulated data
-yx_input = sim_rain;                    % Change here for testing simulated data
+yx_input = xm_xv_log;
+y_input = ym_yv_log;
+% y_input = sim_nvdi;                   % Change here for testing simulated data
+% yx_input = sim_rain;                  % Change here for testing simulated data
 N = length(y_input); 
 
 % Prediction step and number unknownd
