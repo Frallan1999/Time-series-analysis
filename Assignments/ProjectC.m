@@ -102,9 +102,10 @@ input_arma = c3a3;
 A_sim = input_arma.a;
 C_sim = input_arma.c;
 N = 10000; 
-e = sqrt(1e-3) * rand(N,1);
+extraN = 100;
+e = sqrt(1e-3) * randn(N+extraN,1);
 sim_rain = filter(C_sim,A_sim, e);
-sim_rain = sim_rain(101:end);
+sim_rain = sim_rain(extraN+1:end);
 
 %% 4.1 Recursive update of input predictions
 % Create Kalman for recursive estimation 
@@ -114,23 +115,23 @@ clc;
 % Data to put into Kalman
 %y_input = [xm_real_log;xv_log;xt_log]; % all data??? Is this really correct 
 
-% y_input = [xm_real_log];
-y_input = sim_rain;                   % Change here fort testing simulated data
+y_input = [xm_real_log];
+% y_input = sim_rain;                   % Change here fort testing simulated data
 N = length(y_input);      
 
 % Prediction step and number unknownd
-k = 3;                                  % Prediction step 
+k = 1;                                  % Prediction step 
 q0 = nnz(input_arma.a) - 1              % (3) - Number of unknowns in the A polynomial 
 p0 = nnz(input_arma.c) - 1              % (4) - Number of unknowns in the C polynomial 
 
 % Define the state space equations.
 A = eye(p0+q0);                         % p0 + q0 are number of hidden states 
-Rw = var(y_input);                                % Try different! Measurement noise covariance matrix. Same dimension as Ry.
+Rw = var(y_input);                      % Try different! Measurement noise covariance matrix. Same dimension as Ry.
 Re = 1e-6*eye(p0+q0);                   % Try different! System noise covariance matrix. 
 
 % Set initial values
 xt_t = [-0.1626 -0.2716 -0.5327 0.1276 0.3341 -0.2683 0.2605]';    
-Rxt_t1 = 2*eye(p0+q0);                 % Initial covariance matrix, IF large -> small trust initial values 
+Rxt_t1 = 3*eye(p0+q0);                 % Initial covariance matrix, IF large -> small trust initial values 
 
 % Storing values 
 Xsave = zeros(p0+q0,N-k);               % Stored (hidden) states
@@ -151,7 +152,7 @@ for t=37:N-k                            % Starts at 37 as we use t-36
     % Update the parameter estimates.
     Ryt_t1 = Ct * Rxt_t1 * Ct' + Rw;    % R^yy_{t | t-1} = C R^xx_{t|t-1} + Rw
     Kt = Rxt_t1 * Ct' / Ryt_t1;         % K_t = R^xx{t| t-1} * Ct' * inv(Ryy{t | t-1})
-    yhat(t) = Ct*xt_t1;                  % One step prediction - y{t|t-1}
+    yhat(t) = Ct*xt_t1;                 % One step prediction - y{t|t-1}
     ehat(t) = y_input(t)-yhat(t);       % One step prediction error - e_t = y_t - y_{t | t-1}
     xt_t = xt_t1 + Kt*ehat(t);          % x_{t | t}
     
@@ -183,17 +184,19 @@ for t=37:N-k                            % Starts at 37 as we use t-36
 end
 
 %% Examine the estimated parameters (Hidden states) (Not so nice...)
-clc;
 close all;
 figure()
+% trueParams = [-0.1626 -0.2716 -0.5327 0.1276 0.3341 -0.2683 0.2605];   % For simulated data
+% plotWithConf( (1:N-k), Xsave', xStd', trueParams);                     % For simulated data
 plotWithConf( (1:N-k), Xsave', xStd');
 legend('a1', 'a2', 'a36', 'c1', 'c2', 'c7', 'c9')
 title('Estimated states for input data rain')
 xlim([37 N-k])
 
 figure()
-plot(Xsave(:,37:end-k)')
+plot(Xsave(:,37:end)')
 legend('a1', 'a2', 'a36', 'c1', 'c2', 'c7', 'c9')
+
 %% Plot k step prediction in "right" domain
 close all; 
 
@@ -216,7 +219,7 @@ legend('Realisation', 'Kalman estimate', 'Location','SW')
 
 error = y_input_org(50:end)-yhatk_org(50:end); 
 plotACFnPACF(error, 40, 'Prediction using the Kalman filter');
-checkIfWhite(error);
+checkIfWhite(error);              % Only relevant for 1 step prediction
 
 %% Examine k-step prediction residual.
 ek = y_input_org(N-200:N-k)-yhatk_org(N-200:N-k);             % Ignore the initial values to let the filter converge first.
@@ -224,6 +227,7 @@ plotACFnPACF( error, 40, sprintf('%i-step prediction using the Kalman filter', k
 
 fprintf('  The variance of original signal is                %5.2f.\n', var(y_input)')
 fprintf('  The variance of the %i-step prediction residual is %5.2f.\n', k, var(error)')
+
 
 
 

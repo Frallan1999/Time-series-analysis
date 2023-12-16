@@ -194,7 +194,7 @@ hold off
 %% 3.3.2 Box Jenkins 
 % Testing model orders for A2 and B                               
 A2 = [1 0 0]; 
-B =  [0 0 1 0];     % Removed insignificant 2nd order 
+B =  [0 0 1 0];     % Removed insignificant 2nd order
 
 Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
 z = iddata(y,x);    
@@ -248,6 +248,7 @@ clc;
 
 %AMANDA's EDITS
 C1 = 1;         % Removal of insignificant variables
+% B = 
 % END
 
 Mi = idpoly(1, B, C1, A1, A2);
@@ -357,6 +358,7 @@ checkIfNormal( pacfEst(k+1:end), 'PACF' );
 % KB = A1 B (D * B in idpoly --> B in ARMA)
 % KC = A2 C1 (F * C in idpoly --> C in ARMA)
 
+save('model_B2', "model_B2");
 clc 
 close all
 
