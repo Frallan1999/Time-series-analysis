@@ -81,6 +81,9 @@ modelLim = length(xm)+1;                 % Index for the first validation data p
 load input_arma.mat
 input_arma = sarima_x;
 
+load("pre_whiten.mat")
+input_c3a3 = c3a3;
+
 load("model_B2.mat")
 model_B2 = model_B2; 
 
@@ -94,7 +97,7 @@ extraN = 100;
 e = sqrt(1e-3) * randn(N+extraN,1);
 sim_rain = filter(C_sim,A_sim, e);
 
-% For predicting with Box Jenkins 
+% For predicting with Box Jenkins
 KA = conv(model_B2.F,model_B2.D);
 KB = conv(model_B2.D, model_B2.B);
 KC = conv(model_B2.F,model_B2.C);
@@ -109,8 +112,8 @@ close all;
 clc; 
 
 % Data to put into Kalman
-% yx_input = [xm_log];                    % Here only modelling
-yx_input = sim_rain;                   % Change here fort testing simulated data
+% yx_input = [xm_log];                  % Here only modelling
+yx_input = sim_rain;                    % Change here fort testing simulated data
 N = length(yx_input);      
 
 % Prediction step and number unknownd
@@ -125,7 +128,7 @@ Re = 1e-6*eye(p0+q0);                   % Try different! System noise covariance
 
 % Set initial values
 xt_t = [-0.1626 -0.2716 -0.5327 0.1274 0.3462 -0.2665 0.2634]';    
-Rxt_t1 = 3*eye(p0+q0);                 % Initial covariance matrix, If large -> small trust initial values 
+Rxt_t1 = 3*eye(p0+q0);                  % Initial covariance matrix, If large -> small trust initial values 
 
 % Storing values 
 Xsave = zeros(p0+q0,N-k);               % Stored (hidden) states
@@ -171,8 +174,8 @@ for t=37:N-k                            % Starts at 37 as we use t-36
     Xsave(:,t) = xt_t;
 
     % Estimate a one std confidence interval of the estimated parameters.
-    xStd(:,t) = sqrt( diag(Rxt_t) );            % This is one std for each of the parameters for the one-step prediction.
-    xStdk(:,t) = sqrt( diag(Rx_k) );            % This is one std for each of the parameters for the k-step prediction.
+    xStd(:,t) = sqrt( diag(Rxt_t) );    % This is one std for each of the parameters for the one-step prediction.
+    xStdk(:,t) = sqrt( diag(Rx_k) );    % This is one std for each of the parameters for the k-step prediction.
 end
 
 %% Examine the estimated parameters (Hidden states)
@@ -186,7 +189,7 @@ title('Estimated states for input data rain')
 xlim([37 N-k])
 
 figure()
-plot(Xsave(:,37:end)')
+plot(Xsave(:,50:end)')
 legend('a1', 'a2', 'a36', 'c1', 'c2', 'c7', 'c9')
 
 %% Plot k step prediction in "right" domain
@@ -234,8 +237,8 @@ clc;
 % Data to put into Kalman
 % yx_input = xm_log;
 % y_input = ym_log;
-y_input = sim_nvdi;                   % Change here for testing simulated data
-yx_input = sim_rain;                  % Change here for testing simulated data
+y_input = sim_nvdi;                     % Change here for testing simulated data
+yx_input = sim_rain;                    % Change here for testing simulated data
 N = length(y_input); 
 
 % Prediction step and number unknownd
@@ -259,7 +262,6 @@ yhatk = zeros(N,1);                     % Estimated k-step prediction
 
 y_t_input = zeros(1,N);          
 yx_t_input2 = zeros(1,N);                 
-
 
 xStd  = zeros(nbr_params,N-k);          % Stores one std for the one-step prediction.
 xStdk = zeros(nbr_params,N-k);          % Stores one std for the k-step prediction.
@@ -297,8 +299,8 @@ for t=41:N-k                            % Starts at 37 as we use t-36
     Xsave(:,t) = xt_t;
 
     % Estimate a one std confidence interval of the estimated parameters.
-    xStd(:,t) = sqrt( diag(Rxt_t) );            % This is one std for each of the parameters for the one-step prediction.
-    xStdk(:,t) = sqrt( diag(Rx_k) );            % This is one std for each of the parameters for the k-step prediction.
+    xStd(:,t) = sqrt( diag(Rxt_t) );    % This is one std for each of the parameters for the one-step prediction.
+    xStdk(:,t) = sqrt( diag(Rx_k) );    % This is one std for each of the parameters for the k-step prediction.
 end
 
 
@@ -341,4 +343,3 @@ plotACFnPACF( error, 40, sprintf('%i-step prediction using the Kalman filter', k
 
 fprintf('  The variance of original signal is %5.2f.\n', var(yx_input)')
 fprintf('  The variance of the %i-step prediction residual is %5.2f.\n', k, var(error)')
-
