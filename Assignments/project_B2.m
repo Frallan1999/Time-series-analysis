@@ -162,6 +162,7 @@ basicPlot(res.y,nbrLags,'Residuals')
 whitenessTest(res.y);
 checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 % plotNTdist(res.y);
+save('pre_whiten.mat','c3a3')
 
 %% 3.3.2 Box Jenkins 
 % Compute CCF eps and w, eps_t = H(z) * w_t + v_t
@@ -308,7 +309,7 @@ checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 % White? No! But lets move on :) 
 save('input_arma.mat','sarima_x')
 
-% %% 3.3.2 Predict the input - ANOTHER MODEL
+% A WHITE MODEL
 % % Fitting an ARMA to A x = C et
 % clc
 % close all
@@ -337,7 +338,7 @@ save('input_arma.mat','sarima_x')
 clc
 close all
 
-k = 4;                  % sets number of steps prediction
+k = 1;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
