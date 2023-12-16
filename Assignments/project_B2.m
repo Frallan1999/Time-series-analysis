@@ -331,7 +331,6 @@ checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 % plotNTdist(res.y);
 
 % White? No! But lets move on :) 
-save('input_arma.mat','sarima_x')
 
 %% 3.3.2 Predict the input
 % Using the derived ARMA for predicting the input 
@@ -391,7 +390,7 @@ KC = conv(model_B2.F,model_B2.C);
 % Form the ARMA prediction for y_t (note that this is not the same G
 % polynomial as we computed above (that was for x_t, this is for y_t).
 
-[Fy, Gy] = polydiv(KC, KA, k)
+[Fy, Gy] = polydiv(KC, KA, k);
 
 % Compute the \hat\hat{F} and \hat\hat{G} polynomials.
 [Fhh, Ghh] = polydiv(conv(Fy, KB), KC, k);
