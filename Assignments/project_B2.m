@@ -178,7 +178,7 @@ w_t = myFilter(c3a3.a, c3a3.c, x);
 
 n = length(x); 
 
-M=100;
+M=50;
 figure()
 stem(-M:M,crosscorr(w_t ,eps_t,M)); 
 title('Cross correlation function'), xlabel('Lag')
@@ -187,14 +187,15 @@ plot(-M:M, 2/sqrt(n)*ones(1,2*M+1), 'r--')
 plot(-M:M, -2/sqrt(n)*ones(1,2*M+1),'r--') 
 hold off
 
-% r (A2 order): ringing suggests 2
-% d (delay for B): 2
+% r (A2 order): ringing suggests 2 or 0
+% d (delay for B): 3
 % s (order for B after delay): 2
 
 %% 3.3.2 Box Jenkins 
 % Testing model orders for A2 and B                               
 A2 = [1 0 0]; 
-B =  [0 0 1 0];     % Removed insignificant 2nd order
+%B =  [0 0 1 0];     % Removed insignificant 2nd order
+B = [0 0 0 1 0];    % Removed insignificant z^-5
 
 Mi = idpoly ([1] ,[B] ,[] ,[] ,[A2]);
 z = iddata(y,x);    
@@ -229,7 +230,7 @@ A1 = [1 zeros(1,35) -1] ;
 C1 = [1 0 1];
 model_init = idpoly (A1, [], C1);
 model_init.Structure.a.Free = [0 1 zeros(1,34) 1];
-model_init.Structure.c.Free = [0 0 1];
+model_init.Structure.C.Free = [0 0 1];
 
 etilde_data = iddata(etilde.y);
 a1c1 = pem(etilde_data,model_init); 
@@ -246,18 +247,15 @@ whitenessTest(res_tilde.y);
 close all;
 clc; 
 
-%AMANDA's EDITS
 C1 = 1;         % Removal of insignificant variables
-% B = 
-% END
 
 Mi = idpoly(1, B, C1, A1, A2);
-Mi.Structure.D.Free = [0 1 zeros(1,34) 1];  % VA?
+Mi.Structure.D.Free = [0 1 zeros(1,34) 1];  
 %Mi.Structure.C.Free = [0 0 1];
 %Mi.Structure.F.Free = [0 0 1];
 model_B2 = pem(z,Mi);
 present(model_B2)
-ehat = resid(model_B2,z);      % the estimate of the noise process e_t
+ehat = resid(model_B2,z);   % the estimate of the noise process e_t
 
 %% 3.3.2 Box Jenkins
 % Final analysis of ehat - is the entire model good enough?
@@ -285,44 +283,68 @@ checkIfNormal(ehat.y,'e-hat','D',0.05);
 % The model we will use for prediction is then MboxJ. 
 
 %% 3.3.2 Predict the input
-% Fitting an ARMA to A3 x = C3 et
+% Fitting an ARMA to A x = C et
 clc
 close all
 
 % Finding a good model to the data
 x = xm_log;
 
-A3 = [1 zeros(1,35) -1];
-C3 = [1 zeros(1,9)];
-model_init = idpoly(A3 ,[], C3);
+Ax = [1 zeros(1,35) -1];
+Cx = [1 zeros(1,9)];
+model_init = idpoly(Ax ,[], Cx);
 model_init.Structure.a.Free = [0 1 1 zeros(1,7) zeros(1,25) 0 1];
 model_init.Structure.c.Free = [0 1 1 zeros(1,3) 1 0 0 1];
 
-c3a3 = pem(x, model_init);
+sarima_x = pem(x, model_init);
 
-res = resid(c3a3, x); 
-present(c3a3);
+res = resid(sarima_x, x); 
+present(sarima_x);
 basicPlot(res.y,nbrLags,'Residuals')
 whitenessTest(res.y);
 checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 % plotNTdist(res.y);
 
 % White? No! But lets move on :) 
-save('input_arma.mat','c3a3')
+save('input_arma.mat','sarima_x')
 
-%% 3.3.2 Predict the input
-% Using the derived ARMA for predicting the input 
-
+%% 3.3.2 Predict the input - ANOTHER MODEL
+% Fitting an ARMA to A x = C et
 clc
 close all
 
-k = 2;                  % sets number of steps prediction
+% Finding a good model to the data
+x = xm_log;
+
+Ax = [1 0 0 zeros(1,33) -1];
+Cx = [1 zeros(1,9)];
+model_init = idpoly(Ax ,[], Cx);
+model_init.Structure.a.Free = [0 1 1 zeros(1,33) 1];
+model_init.Structure.c.Free = [0 0 1 0 1 0 1 0 1 1];
+sarima_x = pem(x, model_init);
+
+res = resid(sarima_x, x); 
+present(sarima_x);
+basicPlot(res.y,nbrLags,'Residuals')
+whitenessTest(res.y);
+checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
+% plotNTdist(res.y);
+
+% White? No! But lets move on :) 
+save('input_arma.mat','sarima_x')
+
+%% 3.3.2 Predict the input
+% Using the derived ARMA for predicting the input 
+clc
+close all
+
+k = 1;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
-[Fx, Gx] = polydiv(c3a3.c, c3a3.a, k);
-throw = max(length(Gx), length(c3a3.c));
-xhat_k = filter(Gx, c3a3.c, xm_xv_log);
+[Fx, Gx] = polydiv(sarima_x.c, sarima_x.a, k);
+throw = max(length(Gx), length(sarima_x.c));
+xhat_k = filter(Gx, sarima_x.c, xm_xv_log);
 xhat_k_org = exp(xhat_k)-constant;
 
 figure
