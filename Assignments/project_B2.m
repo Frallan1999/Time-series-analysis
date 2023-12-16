@@ -308,36 +308,36 @@ checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 % White? No! But lets move on :) 
 save('input_arma.mat','sarima_x')
 
-%% 3.3.2 Predict the input - ANOTHER MODEL
-% Fitting an ARMA to A x = C et
-clc
-close all
-
-% Finding a good model to the data
-x = xm_log;
-
-Ax = [1 0 0 zeros(1,33) -1];
-Cx = [1 zeros(1,9)];
-model_init = idpoly(Ax ,[], Cx);
-model_init.Structure.a.Free = [0 1 1 zeros(1,33) 1];
-model_init.Structure.c.Free = [0 0 1 0 1 0 1 0 1 1];
-sarima_x = pem(x, model_init);
-
-res = resid(sarima_x, x); 
-present(sarima_x);
-basicPlot(res.y,nbrLags,'Residuals')
-whitenessTest(res.y);
-checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
-% plotNTdist(res.y);
-
-% White? No! But lets move on :) 
+% %% 3.3.2 Predict the input - ANOTHER MODEL
+% % Fitting an ARMA to A x = C et
+% clc
+% close all
+% 
+% % Finding a good model to the data
+% x = xm_log;
+% 
+% Ax = [1 0 0 zeros(1,33) -1];
+% Cx = [1 zeros(1,9)];
+% model_init = idpoly(Ax ,[], Cx);
+% model_init.Structure.a.Free = [0 1 1 zeros(1,33) 1];
+% model_init.Structure.c.Free = [0 0 1 0 1 0 1 0 1 1];
+% sarima_x = pem(x, model_init);
+% 
+% res = resid(sarima_x, x); 
+% present(sarima_x);
+% basicPlot(res.y,nbrLags,'Residuals')
+% whitenessTest(res.y);
+% checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
+% % plotNTdist(res.y);
+% 
+% % White? No! But lets move on :) 
 
 %% 3.3.2 Predict the input
 % Using the derived ARMA for predicting the input 
 clc
 close all
 
-k = 1;                  % sets number of steps prediction
+k = 4;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
@@ -421,3 +421,5 @@ title(sprintf('ACF of the %i-step output prediction residual', k) )
 checkIfWhite( ehat );
 pacfEst = pacf( ehat, noLags, 0.05 );
 checkIfNormal( pacfEst(k+1:end), 'PACF' );
+
+% Estimated prediction error variance. 

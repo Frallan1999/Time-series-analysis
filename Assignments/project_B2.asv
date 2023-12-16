@@ -32,7 +32,7 @@ v_t = y_t(454:584,1);
 yt = y_all(585:end,1);        % 10% for test
 t_t = y_t(585:end,1); 
 
-% Take the log
+% Transformation of data 
 y_log = log(y_all);
 ym_log = log(ym);
 yv_log = log(yv);
@@ -89,7 +89,7 @@ xm_t = m_t;
 
 % Validation and test data should cover same time periods for both.
 xv = x_all(modelLim:modelLim+length(v_t)-1);
-xv_t = v_t;                 % Should be the exact same time
+xv_t = v_t;                
 
 xt = x_all(end-length(t_t)+1:end);
 xt_t = t_t;
@@ -255,7 +255,7 @@ Mi.Structure.D.Free = [0 1 zeros(1,34) 1];
 %Mi.Structure.F.Free = [0 0 1];
 model_B2 = pem(z,Mi);
 present(model_B2)
-ehat = resid(model_B2,z);      % the estimate of the noise process e_t
+ehat = resid(model_B2,z);   % the estimate of the noise process e_t
 
 %% 3.3.2 Box Jenkins
 % Final analysis of ehat - is the entire model good enough?
@@ -308,44 +308,36 @@ checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
 % White? No! But lets move on :) 
 save('input_arma.mat','sarima_x')
 
-%% 3.3.2 Predict the input - ANOTHER MODEL
-% Fitting an ARMA to A x = C et
-clc
-close all
-
-% Finding a good model to the data
-x = xm_log;
-
-Ax = [1 0 0 zeros(1,33) -1];
-Cx = 1;
-model_init = idpoly(Ax ,[], Cx);
-model_init.Structure.a.Free = [0 1 1 zeros(1,33) 1];
-
-
-Ax = [1 zeros(1,35) -1];
-Cx = [1 zeros(1,35) -1];
-model_init = idpoly(A3 ,[], C3);
-model_init.Structure.a.Free = [0 1 1 zeros(1,33) 1];
-model_init.Structure.c.Free = [0 zeros(1,35) 1];
-
-sarima_x = pem(x, model_init);
-
-res = resid(sarima_x, x); 
-present(sarima_x);
-basicPlot(res.y,nbrLags,'Residuals')
-whitenessTest(res.y);
-checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
-% plotNTdist(res.y);
-
-% White? No! But lets move on :) 
-save('input_arma.mat','sarima_x')
+% %% 3.3.2 Predict the input - ANOTHER MODEL
+% % Fitting an ARMA to A x = C et
+% clc
+% close all
+% 
+% % Finding a good model to the data
+% x = xm_log;
+% 
+% Ax = [1 0 0 zeros(1,33) -1];
+% Cx = [1 zeros(1,9)];
+% model_init = idpoly(Ax ,[], Cx);
+% model_init.Structure.a.Free = [0 1 1 zeros(1,33) 1];
+% model_init.Structure.c.Free = [0 0 1 0 1 0 1 0 1 1];
+% sarima_x = pem(x, model_init);
+% 
+% res = resid(sarima_x, x); 
+% present(sarima_x);
+% basicPlot(res.y,nbrLags,'Residuals')
+% whitenessTest(res.y);
+% checkIfNormal(res.y,'Residuals for ARMA, prewhitening');
+% % plotNTdist(res.y);
+% 
+% % White? No! But lets move on :) 
 
 %% 3.3.2 Predict the input
 % Using the derived ARMA for predicting the input 
 clc
 close all
 
-k = 6;                  % sets number of steps prediction
+k = 4;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
@@ -398,7 +390,7 @@ KC = conv(model_B2.F,model_B2.C);
 % Form the ARMA prediction for y_t (note that this is not the same G
 % polynomial as we computed above (that was for x_t, this is for y_t).
 
-[Fy, Gy] = polydiv(KC, KA, k)
+[Fy, Gy] = polydiv(KC, KA, k);
 
 % Compute the \hat\hat{F} and \hat\hat{G} polynomials.
 [Fhh, Ghh] = polydiv(conv(Fy, KB), KC, k);
@@ -429,3 +421,5 @@ title(sprintf('ACF of the %i-step output prediction residual', k) )
 checkIfWhite( ehat );
 pacfEst = pacf( ehat, noLags, 0.05 );
 checkIfNormal( pacfEst(k+1:end), 'PACF' );
+
+% Estimated prediction error variance. 
