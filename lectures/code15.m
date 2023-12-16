@@ -71,7 +71,8 @@ plotACFnPACF( xM, noLags, 'Input, x_t' );
 
 
 %% There seems to be a strong periodicity at 24, suggesting that a differentiation might help.
-diff_xM = filter([ 1 zeros(1,sX-1) -1 ], 1, xM);   diff_xM = diff_xM(sX+1:end);
+diff_xM = filter([ 1 zeros(1,sX-1) -1 ], 1, xM);   
+diff_xM = diff_xM(sX+1:end);
 plotACFnPACF( diff_xM, noLags, sprintf('Differentiated input, \\nabla_{%i} x_t', sX) );
 
 

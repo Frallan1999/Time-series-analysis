@@ -459,9 +459,6 @@ figure(2)
 plot(y_m)
 axis tight
 figure(3)
-%%
-histogram(y)
-checkIfNormal(y, 'ElGeneina rain_org')
 
 %% 2.6.2 Signusoidal input ARMAX
 close all;
