@@ -79,7 +79,7 @@ modelLim = length(xm)+1;                 % Index for the first validation data p
 
 %% Loading previous models 
 load input_arma.mat
-input_arma = c3a3;
+input_arma = sarima_x;
 
 load("model_B2.mat")
 model_B2 = model_B2; 
