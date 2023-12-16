@@ -32,7 +32,7 @@ v_t = y_t(454:584,1);
 yt = y_all(585:end,1);        % 10% for test
 t_t = y_t(585:end,1); 
 
-% Take the log
+% Transformation of data 
 y_log = log(y_all);
 ym_log = log(ym);
 yv_log = log(yv);
@@ -89,7 +89,7 @@ xm_t = m_t;
 
 % Validation and test data should cover same time periods for both.
 xv = x_all(modelLim:modelLim+length(v_t)-1);
-xv_t = v_t;                 % Should be the exact same time
+xv_t = v_t;                
 
 xt = x_all(end-length(t_t)+1:end);
 xt_t = t_t;
