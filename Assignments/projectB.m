@@ -86,8 +86,8 @@ title('ACF and TACF with alpha=0.01')
 close all; 
 clc; 
 
-checkIfNormal(y,'Normalized NVDI','D',0.05)
-bcNormPlot(y) % Suggests that taking the log might be a good idea
+checkIfNormal(y,'normalized NVDI','D',0.05)
+%bcNormPlot(y) % Suggests that taking the log might be a good idea
 
 %% 3.2 Model B1 - NVDI prediction without external input
 % Testing log transform
@@ -95,7 +95,7 @@ close all;
 clc; 
 
 y_log = log(y);
-checkIfNormal(y_log,'Log normalized NVDI','D',0.05) % Did the trick!
+checkIfNormal(y_log,'log of normalized NVDI','D',0.05) % Did the trick!
 
 %%  3.2 Model B1 - NVDI prediction without external input
 % Transformation of data 
@@ -269,7 +269,7 @@ plotNTdist(res.y);
 clc
 close all
 
-k = 7;                  % sets number of steps prediction
+k = 5;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
