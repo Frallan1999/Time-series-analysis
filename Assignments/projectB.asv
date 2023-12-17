@@ -298,7 +298,7 @@ axis([ym_yv_t(length(ym)) ym_yv_t(length(ym_yv_org)) min(ym_yv_org)*0.9 max(ym_y
 
 %% 3.2.2 Model prediction
 % Form the residual for the validation data. It should behave as an MA(k-1)
-yv_org = 1/2*(ym_yv+1)*(max_data - min_data)+min_data;
+yv_org = 
 
 ehat = ym_yv_org - yhat_k_org;
 ehat = ehat(modelLim:end);

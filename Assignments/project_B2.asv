@@ -44,7 +44,7 @@ ym_yv_t = [m_t; v_t];
 ym_yv_log = log(ym_yv);
 
 modelLim = length(ym)+1; % Index for first data in validation set
-testlim = length(ym_yv)+1; % Index for first data in test set
+testlim = length(ym_yv)+1;
 %% 3.3 Model B2 - NVDI prediction with rain as external input
 % Examine the rain data - is it Gaussian?
 close all; 
