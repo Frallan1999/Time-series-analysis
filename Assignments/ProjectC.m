@@ -206,13 +206,13 @@ xlabel('Time')
 legend('Realisation', 'Kalman estimate', 'Location','SW')
 xlim([1 length(yx_input(modelLim:end))])
 
-
 figure()
-plot( [yx_input_org(modelLim:end) yxhatk_org(modelLim:end)] ) 
+h = plot( [yx_input_org(modelLim:end) yxhatk_org(modelLim:end)] ) 
 title( sprintf('%i-step prediction using the Kalman filter original domain', k) )
 xlabel('Time')
 legend('Realisation', 'Kalman estimate', 'Location','SW')
 xlim([1 length(yx_input(modelLim:end))])
+% axis([xv_t(1) xv_t(end) min(yx_input_org)*0.9 max(yx_input_org)*1.1])
 
 %% Examine k-step prediction residual.
 % it is not the best
@@ -244,7 +244,7 @@ nbr_params = length(KA_kalman) + length(KB_kalman) + length(KC_kalman);
 
 % Define the state space equations.
 A = eye(nbr_params);                    % Hidden states matrix 
-Rw = 10;                                % Try different! Measurement noise covariance matrix. Could use from noise estimate polynomial pred
+Rw = var(y_input);                                % Try different! Measurement noise covariance matrix. Could use from noise estimate polynomial pred
 Re = 1e-3*eye(nbr_params);              % Try different! System noise covariance matrix. 
 
 % Set initial values
@@ -306,7 +306,6 @@ figure()
 % trueParams = [KA_kalman KB_kalman KC_kalman];     
 % plotWithConf( (1:N-k), Xsave', xStd', trueParams);
 plotWithConf( (1:N-k), Xsave', xStd');
-legend('a1', 'a2', 'a3', 'a36', 'c1', 'c2', 'c7', 'c9') 
 
 title('Estimated states for output data nvdi')
 xlim([42 N-k])
@@ -314,6 +313,7 @@ xlim([42 N-k])
 figure()
 plot(Xsave(:,42:end)')
 xline(modelLim-50, 'r--', 'LineWidth', 1, 'Label','');
+legend('a1', 'a2', 'a3', 'a36','b3', 'b4', 'b5', 'b39', 'b40', 'c1', 'c2')
 xlim([1, length(Xsave)-50]);
 
 %% Plot k step prediction in "right" domain
