@@ -67,7 +67,7 @@ title('Test set')
 close all
 clc
 
-nbrLags = 100;
+nbrLags = 50;
 subplot(121)
 acf(ym, nbrLags, 0.02 ,1);
 hold on
@@ -269,7 +269,7 @@ plotNTdist(res.y);
 clc
 close all
 
-k = 5;                  % sets number of steps prediction
+k = 7;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
@@ -284,7 +284,7 @@ plot([ym_yv yhat_k_org] )
 line( [modelLim modelLim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
 legend('NVDI', 'Predicted NVDI', 'Prediction starts')
 title( sprintf('Predicted NVDI, y_{t+%i|t}', k) )
-axis([1 length(ym_yv) min(ym_yv)*1.5 max(ym_yv)*1.5])
+axis([length(ym) length(ym_yv) min(ym_yv)*1.5 max(ym_yv)*1.5])
 
 %std_xk = sqrt( sum( Fx.^2 )*var_ex );
 %fprintf( 'The theoretical std of the %i-step prediction error is %4.2f.\n', k, std_xk)
@@ -293,6 +293,8 @@ axis([1 length(ym_yv) min(ym_yv)*1.5 max(ym_yv)*1.5])
 % Form the residual for the validation data. It should behave as an MA(k-1)
 ehat = ym_yv - yhat_k_org;
 ehat = ehat(modelLim:end);
+var_ehat = var(ehat)
+var_ehat_norm = var(ehat)/var(yv)
 
 figure
 acf( ehat, nbrLags, 0.05, 1 );

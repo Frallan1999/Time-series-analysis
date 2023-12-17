@@ -338,7 +338,7 @@ save('input_arma.mat','sarima_x')
 clc
 close all
 
-k = 1;                  % sets number of steps prediction
+k = 7;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
@@ -408,19 +408,20 @@ plot([ym_yv yhat_k_org] )
 line( [modelLim modelLim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
 legend('NVDI', 'Predicted NVDI', 'Prediction starts')
 title( sprintf('Predicted output signal, y_{t+%i|t}', k) )
-axis([1 length(ym_yv) min(ym_yv)*1.25 max(ym_yv)*1.25])
+axis([length(ym) length(ym_yv) min(ym_yv)*1.25 max(ym_yv)*1.25])
 
 %% 3.3.3 Predicting NVDI with rain as external input
 % Checking the residuals
 
 ehat = ym_yv - yhat_k_org;
 ehat = ehat(modelLim:end);
+var_ehat = var(ehat)
+var_ehat_norm = var(ehat)/var(yv)
 
+noLags = 50;
 figure
 acf(ehat, noLags, 0.05, 1);
 title(sprintf('ACF of the %i-step output prediction residual', k) )
 checkIfWhite( ehat );
 pacfEst = pacf( ehat, noLags, 0.05 );
 checkIfNormal( pacfEst(k+1:end), 'PACF' );
-
-% Estimated prediction error variance. 
