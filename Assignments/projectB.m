@@ -47,7 +47,7 @@ ym_org = y_org(1:453,1);
 
 yv = y(454:584,1);       % 20% for validation
 v_t = y_t(454:584,1);
-vm_org = y_org(454:584,1);
+yv_org = y_org(454:584,1);
 
 yt = y(585:end,1);        % 10% for test
 t_t = y_t(585:end,1); 
@@ -273,7 +273,7 @@ plotNTdist(res.y);
 clc
 close all
 
-k = 7;                  % sets number of steps prediction
+k = 1;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions

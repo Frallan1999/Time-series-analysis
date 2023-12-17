@@ -454,7 +454,7 @@ checkIfNormal( pacfEst(k+1:end), 'PACF' );
 clc
 close all
 
-k = 1;                  % sets number of steps prediction
+k = 7;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
@@ -499,15 +499,32 @@ KC = conv(model_B2.F,model_B2.C);
 [Fhh, Ghh] = polydiv(conv(Fy, KB), KC, k);
 
 % Form the predicted output signal using the predicted input signal.
-yhat_k  =  filter(Fhh, 1, xhat_k) + filter(Ghh, KC, log(xm_xv_xt)) + filter(Gy, KC, y_log); 
+yhat_k  =  filter(Fhh, 1, xhat_k) + filter(Ghh, KC, log(xm_xv_xt+constant)) + filter(Gy, KC, y_log); 
 
 yhat_k_org = exp(yhat_k);
 yhat_k_org = 1/2*(yhat_k_org+1)*(max_data - min_data)+min_data;
 ym_yv_org = 1/2*(ym_yv+1)*(max_data - min_data)+min_data;
 
 figure
-plot(ym_yv_t, [ym_yv_org yhat_k_org] )
-line( [ym_yv_t(modelLim) ym_yv_t(modelLim)], [0 200 ], 'Color','red','LineStyle',':' )
+plot(y_t, [y_org yhat_k_org] )
+line( [y_t(testlim) y_t(testlim)], [0 200 ], 'Color','red','LineStyle',':' )
 legend('NVDI', 'Predicted NVDI', 'Prediction starts')
-title( sprintf('Predicted NVDI, validation data, y_{t+%i|t}', k) )
-axis([ym_yv_t(length(ym)) ym_yv_t(end) min(ym_yv_org)*0.9 max(ym_yv_org)*1.1])
+title( sprintf('Predicted NVDI, test data, y_{t+%i|t}', k) )
+axis([y_t(length(ym_yv)) y_t(end) min(ym_yv_org)*0.9 max(ym_yv_org)*1.1])
+
+%% 3.3.3 Model prediction
+% Form the residual for the TEST data. It should behave as an MA(k-1)
+
+ehat = y_org - yhat_k_org;
+ehat = ehat(testlim:end);
+var_ehat = var(ehat)
+var_ehat_norm = var(ehat)/var(yt_org)
+
+figure
+acf( ehat, nbrLags, 0.05, 1 );
+title( sprintf('ACF of the %i-step prediction residual', k) )
+fprintf('This is a %i-step prediction. Ideally, the residual should be an MA(%i) process.\n', k, k-1)
+checkIfWhite( ehat );
+pacfEst = pacf( ehat, nbrLags, 0.05 );
+checkIfNormal( pacfEst(k+1:end), 'PACF' );
+
