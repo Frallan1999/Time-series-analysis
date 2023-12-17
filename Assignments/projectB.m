@@ -43,12 +43,15 @@ n = length(ElGeneina.nvdi);
 
 ym = y(1:453,1);         % 70% for modelling
 m_t = y_t(1:453,1);
+ym_org = y_org(1:453,1);
 
 yv = y(454:584,1);       % 20% for validation
 v_t = y_t(454:584,1);
+vm_org = y_org(454:584,1);
 
 yt = y(585:end,1);        % 10% for test
 t_t = y_t(585:end,1); 
+yt_org = y_org(585:end,1); 
 
 % Plot it
 figure(2)
@@ -270,7 +273,7 @@ plotNTdist(res.y);
 clc
 close all
 
-k = 1;                  % sets number of steps prediction
+k = 7;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
@@ -287,7 +290,7 @@ plot(ym_yv_t, [ym_yv_org yhat_k_org] )
 line( [ym_yv_t(modelLim) ym_yv_t(modelLim)], [0 200 ], 'Color','red','LineStyle',':' )
 legend('NVDI', 'Predicted NVDI', 'Prediction starts')
 title( sprintf('Predicted NVDI, validation data, y_{t+%i|t}', k) )
-axis([ym_yv_t(length(ym)) ym_yv_t(length(ym_yv_org)) min(ym_yv_org)*0.9 max(ym_yv_org)*1.1])
+axis([ym_yv_t(length(ym)) ym_yv_t(end) min(ym_yv_org)*0.9 max(ym_yv_org)*1.1])
 
 % figure
 % plot([ym_yv_org yhat_k_org] )
@@ -298,12 +301,11 @@ axis([ym_yv_t(length(ym)) ym_yv_t(length(ym_yv_org)) min(ym_yv_org)*0.9 max(ym_y
 
 %% 3.2.2 Model prediction
 % Form the residual for the validation data. It should behave as an MA(k-1)
-yv_org = 1/2*(ym_yv+1)*(max_data - min_data)+min_data;
 
 ehat = ym_yv_org - yhat_k_org;
 ehat = ehat(modelLim:end);
 var_ehat = var(ehat)
-var_ehat_norm = var(ehat)/var(yv)
+var_ehat_norm = var(ehat)/var(yv_org)
 
 figure
 acf( ehat, nbrLags, 0.05, 1 );
@@ -318,7 +320,7 @@ checkIfNormal( pacfEst(k+1:end), 'PACF' );
 clc
 close all
 
-k = 1;                  % sets number of steps prediction
+k = 7;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
@@ -330,19 +332,19 @@ yhat_k_org = exp(yhat_k);
 yhat_k_org = 1/2*(yhat_k_org+1)*(max_data - min_data)+min_data;
 
 figure
-plot([y_org yhat_k_org])
-line( [testlim testlim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
-legend('NVDI', 'Predicted NVDI', 'Test data starts')
-title( sprintf('Predicted NVDI, y_{t+%i|t}', k) )
-axis([length(ym) length(y_log) min(y)*1.5 max(y)*1.5])
-
+plot(y_t, [y_org yhat_k_org] )
+line( [y_t(testlim) y_t(testlim)], [0 200 ], 'Color','red','LineStyle',':' )
+legend('NVDI', 'Predicted NVDI', 'Prediction starts')
+title( sprintf('Predicted NVDI, test data, y_{t+%i|t}', k) )
+axis([y_t(length(ym_yv)) y_t(end) min(ym_yv_org)*0.9 max(ym_yv_org)*1.1])
 
 %% 3.2.2 Model prediction
 % Form the residual for the TEST data. It should behave as an MA(k-1)
-ehat = y - yhat_k_org;
+
+ehat = y_org - yhat_k_org;
 ehat = ehat(testlim:end);
 var_ehat = var(ehat)
-var_ehat_norm = var(ehat)/var(yt)
+var_ehat_norm = var(ehat)/var(yt_org)
 
 figure
 acf( ehat, nbrLags, 0.05, 1 );

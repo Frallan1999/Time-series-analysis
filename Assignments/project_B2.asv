@@ -14,23 +14,26 @@ addpath('../functions', '../data')      % Add this line to update the path (Hann
 load proj23.mat
 
 % Normalizing the data
-y_all = ElGeneina.nvdi;
+y_org = ElGeneina.nvdi;
 y_t = ElGeneina.nvdi_t;
 
 max_data = 255;
 min_data = 0;
 
-y_all = 2*(y_all-min_data)/(max_data - min_data)-1;
+y_all = 2*(y_org-min_data)/(max_data - min_data)-1;
 
 % Split it 
 ym = y_all(1:453,1);         % 70% for modelling
 m_t = y_t(1:453,1);
+ym_org = y_org(1:453,1);
 
 yv = y_all(454:584,1);       % 20% for validation
 v_t = y_t(454:584,1);
+yv_org = y_org(454:584,1);
 
 yt = y_all(585:end,1);        % 10% for test
 t_t = y_t(585:end,1); 
+yt_org = y_org(585:end,1); 
 
 % Transformation of data 
 y_log = log(y_all);
@@ -44,7 +47,7 @@ ym_yv_t = [m_t; v_t];
 ym_yv_log = log(ym_yv);
 
 modelLim = length(ym)+1; % Index for first data in validation set
-testlim = length(ym_yv)+1;
+testlim = length(ym_yv)+1; % Index for first data in test set
 %% 3.3 Model B2 - NVDI prediction with rain as external input
 % Examine the rain data - is it Gaussian?
 close all; 
@@ -333,12 +336,18 @@ save('input_arma.mat','sarima_x')
 % 
 % % White? No! But lets move on :) 
 
+%% VALIDATION DATA
+
+
+
+
+
 %% 3.3.2 Predict the input
 % Using the derived ARMA for predicting the input 
 clc
 close all
 
-k = 7;                  % sets number of steps prediction
+k = 1;                  % sets number of steps prediction
 noLags = 50;
 
 % Solve the Diophantine equation and create predictions
@@ -361,6 +370,8 @@ axis([1 length(xm_xv) min(xm_xv)*1.25 max(xm_xv)*1.25])
 % Form the residual for the validation data. It should behave as an MA(k-1)
 ehat = xm_xv - xhat_k_org;
 ehat = ehat(modelLim:end);
+var_ehat = var(ehat)
+var_ehat_norm = var(ehat)/var(xv)
 
 figure
 acf( ehat, nbrLags, 0.05, 1 );
@@ -371,6 +382,7 @@ pacfEst = pacf( ehat, nbrLags, 0.05 );
 checkIfNormal( pacfEst(k+1:end), 'PACF' );
 
 %% 3.3.3 Predicting NVDI with rain as external input
+% VALIDATION DATA
 % We have the model on the form y = C/A1 et + B/A2 * xt_t and need it on
 % ARMAX form in order to make predictions
 % A1 A2 yt = A2 C1 et + A1 B z^-d x
@@ -400,23 +412,23 @@ KC = conv(model_B2.F,model_B2.C);
 yhat_k  =  filter(Fhh, 1, xhat_k) + filter(Ghh, KC, xm_xv_log) + filter(Gy, KC, ym_yv_log); 
 
 yhat_k_org = exp(yhat_k);
-%(1/2*(exp(yhat_k)+1)*(max_data - min_data))-min_data;
-% Inverse transform of 2*(y_all-min_data)/(max_data - min_data)-1;
+yhat_k_org = 1/2*(yhat_k_org+1)*(max_data - min_data)+min_data;
+ym_yv_org = 1/2*(ym_yv+1)*(max_data - min_data)+min_data;
 
 figure
-plot([ym_yv yhat_k_org] )
-line( [modelLim modelLim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
+plot(ym_yv_t, [ym_yv_org yhat_k_org] )
+line( [ym_yv_t(modelLim) ym_yv_t(modelLim)], [0 200 ], 'Color','red','LineStyle',':' )
 legend('NVDI', 'Predicted NVDI', 'Prediction starts')
-title( sprintf('Predicted output signal, y_{t+%i|t}', k) )
-axis([length(ym) length(ym_yv) min(ym_yv)*1.25 max(ym_yv)*1.25])
+title( sprintf('Predicted NVDI, validation data, y_{t+%i|t}', k) )
+axis([ym_yv_t(length(ym)) ym_yv_t(end) min(ym_yv_org)*0.9 max(ym_yv_org)*1.1])
 
 %% 3.3.3 Predicting NVDI with rain as external input
 % Checking the residuals
 
-ehat = ym_yv - yhat_k_org;
+ehat = ym_yv_org - yhat_k_org;
 ehat = ehat(modelLim:end);
 var_ehat = var(ehat)
-var_ehat_norm = var(ehat)/var(yv)
+var_ehat_norm = var(ehat)/var(yv_org)
 
 noLags = 50;
 figure
@@ -425,3 +437,80 @@ title(sprintf('ACF of the %i-step output prediction residual', k) )
 checkIfWhite( ehat );
 pacfEst = pacf( ehat, noLags, 0.05 );
 checkIfNormal( pacfEst(k+1:end), 'PACF' );
+
+%% TEST DATA
+
+
+
+
+
+
+
+
+%% 3.3.2 Predict the input
+% Using the derived ARMA for predicting the input 
+clc
+close all
+
+k = 1;                  % sets number of steps prediction
+noLags = 50;
+
+% Solve the Diophantine equation and create predictions
+[Fx, Gx] = polydiv(sarima_x.c, sarima_x.a, k);
+throw = max(length(Gx), length(sarima_x.c));
+xhat_k = filter(Gx, sarima_x.c, x_log);
+xhat_k_org = exp(xhat_k)-constant;
+
+figure
+plot(x_t, [xt xhat_k_org] )
+line( [modelLim modelLim], [-1e6 1e6 ], 'Color','red','LineStyle',':' )
+legend('Reconstructed input rain', 'Predicted rain', 'Prediction starts')
+title( sprintf('Predicted input signal, x_{t+%i|t}', k) )
+axis([1 length(xm_xv) min(xm_xv)*1.25 max(xm_xv)*1.25])
+
+%std_xk = sqrt( sum( Fx.^2 )*var_ex );
+%fprintf( 'The theoretical std of the %i-step prediction error is %4.2f.\n', k, std_xk)
+
+%% 3.3.2 Predict the input
+% Form the residual for the validation data. It should behave as an MA(k-1)
+ehat = xm_xv - xhat_k_org;
+ehat = ehat(modelLim:end);
+var_ehat = var(ehat)
+var_ehat_norm = var(ehat)/var(xv)
+
+figure
+acf( ehat, nbrLags, 0.05, 1 );
+title( sprintf('ACF of the %i-step input prediction residual', k) )
+fprintf('This is a %i-step prediction. Ideally, the residual should be an MA(%i) process.\n', k, k-1)
+checkIfWhite( ehat );
+pacfEst = pacf( ehat, nbrLags, 0.05 );
+checkIfNormal( pacfEst(k+1:end), 'PACF' );
+
+%% 3.3.3 Predicting NVDI with rain as external input
+% TEST DATA
+
+KA = conv(model_B2.F,model_B2.D);
+KB = conv(model_B2.D, model_B2.B);
+KC = conv(model_B2.F,model_B2.C);
+
+% Form the ARMA prediction for y_t (note that this is not the same G
+% polynomial as we computed above (that was for x_t, this is for y_t).
+
+[Fy, Gy] = polydiv(KC, KA, k);
+
+% Compute the \hat\hat{F} and \hat\hat{G} polynomials.
+[Fhh, Ghh] = polydiv(conv(Fy, KB), KC, k);
+
+% Form the predicted output signal using the predicted input signal.
+yhat_k  =  filter(Fhh, 1, xhat_k) + filter(Ghh, KC, xm_xv_log) + filter(Gy, KC, ym_yv_log); 
+
+yhat_k_org = exp(yhat_k);
+yhat_k_org = 1/2*(yhat_k_org+1)*(max_data - min_data)+min_data;
+ym_yv_org = 1/2*(ym_yv+1)*(max_data - min_data)+min_data;
+
+figure
+plot(ym_yv_t, [ym_yv_org yhat_k_org] )
+line( [ym_yv_t(modelLim) ym_yv_t(modelLim)], [0 200 ], 'Color','red','LineStyle',':' )
+legend('NVDI', 'Predicted NVDI', 'Prediction starts')
+title( sprintf('Predicted NVDI, validation data, y_{t+%i|t}', k) )
+axis([ym_yv_t(length(ym)) ym_yv_t(end) min(ym_yv_org)*0.9 max(ym_yv_org)*1.1])
