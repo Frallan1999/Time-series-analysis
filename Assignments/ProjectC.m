@@ -10,7 +10,7 @@ addpath('../functions', '../data')      % Add this line to update the path
 %% 4. Data from before 
 load proj23.mat
 
-y_all  = ElGeneina.nvdi;
+y_all = ElGeneina.nvdi;
 y_t = ElGeneina.nvdi_t; 
 
 max_data = 255;
@@ -205,6 +205,7 @@ title( sprintf('%i-step prediction using the Kalman filter wrong domain', k) )
 xlabel('Time')
 legend('Realisation', 'Kalman estimate', 'Location','SW')
 xlim([1 length(yx_input(modelLim:end))])
+
 
 figure()
 plot( [yx_input_org(modelLim:end) yxhatk_org(modelLim:end)] ) 
