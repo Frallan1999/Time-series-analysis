@@ -117,7 +117,7 @@ plot(ym_yv_t, ym_yv)
 
 %%  3.2 Model B1 - NVDI prediction without external input
 % Differentiation of the data; 
-clc; 
+clc; y_
 close all; 
 noLags = 50;                % max up to N/4
 
