@@ -19,13 +19,13 @@ min_data = 0;
 y_all = 2*(y_all-min_data)/(max_data - min_data)-1;
 
 % Split it 
-ym = y_all(1:453,1);                    % 70% for modelling
+ym = y_all(1:453,1);                     % 70% for modelling
 m_t = y_t(1:453,1);
+ 
+yv = y_all(454:584,1);                   % 20% for validation
+v_t = y_t(454:584,1); 
 
-yv = y_all(454:584,1);                  % 20% for validation
-v_t = y_t(454:584,1);
-
-yt = y_all(585:end,1);                  % 10% for test
+yt = y_all(585:end,1);                   % 10% for test
 t_t = y_t(585:end,1); 
 
 % Transformation of data 
@@ -89,20 +89,18 @@ model_B2 = model_B2;
 
 %% Simulate data for testing 
 clc;
-% For predicting the input (rain) 
 A_sim = input_arma.a;
 C_sim = input_arma.c;
 N = 10000; 
 extraN = 100;
 e = sqrt(1e-3) * randn(N+extraN,1);
-sim_rain = filter(C_sim,A_sim, e);
+sim_rain = filter(C_sim,A_sim, e);                          % For predicting input
 
-% For predicting with Box Jenkins
 KA = conv(model_B2.F,model_B2.D);
 KB = conv(model_B2.D, model_B2.B);
 KC = conv(model_B2.F,model_B2.C);
+sim_nvdi = filter(KC, KA, e) + filter(KB, KA, sim_rain);    % For predicting output
 
-sim_nvdi = filter(KC, KA, e) + filter(KB, KA, sim_rain);
 sim_rain = sim_rain(extraN+1:end);
 sim_nvdi = sim_nvdi(extraN+1:end);
 
@@ -112,8 +110,8 @@ close all;
 clc; 
 
 % Data to put into Kalman
-yx_input = [xm_xv_log];                  
-% yx_input = sim_rain;                   % Change here fort testing simulated data
+yx_input = xm_xv_log;    
+% yx_input = sim_rain;                  % Change here fort testing simulated data
 N = length(yx_input);      
 
 % Prediction step and number unknownd
@@ -177,7 +175,6 @@ for t=37:N-k                            % Starts at 37 as we use t-36
     xStd(:,t) = sqrt( diag(Rxt_t) );    % This is one std for each of the parameters for the one-step prediction.
     xStdk(:,t) = sqrt( diag(Rx_k) );    % This is one std for each of the parameters for the k-step prediction.
 end
-
 %% Examine the estimated parameters (Hidden states)
 close all;
 figure()
@@ -216,27 +213,22 @@ xlabel('Time')
 legend('Realisation', 'Kalman estimate', 'Location','SW')
 xlim([1 length(yx_input(modelLim:end))])
 
-error = yx_input_org(modelLim+20:end)-yxhatk_org(modelLim+20:end); 
-plotACFnPACF(error, 40, 'Prediction using the Kalman filter');
-checkIfWhite(error);              % Only relevant for 1 step prediction
-
 %% Examine k-step prediction residual.
 % it is not the best
-ek = yx_input_org(N-200:N-k)-yxhatk_org(N-200:N-k);             % Ignore the initial values to let the filter converge first.
+error = yx_input_org(modelLim+20:end)-yxhatk_org(modelLim+20:end);  % Plotting hidden states above, seems to have reached a steady state after about 20 
 plotACFnPACF( error, 40, sprintf('%i-step prediction using the Kalman filter', k)  );
 
-fprintf('  The variance of original signal is                %5.2f.\n', var(yx_input)')
+fprintf('  The variance of original signal (still logged including model data) is %5.2f.\n', var(yx_input)')
+fprintf('  The variance of original signal (still logged only validation) is %5.2f.\n', var(xv_log)')
 fprintf('  The variance of the %i-step prediction residual is %5.2f.\n', k, var(error)')
 
 %% Kalman filter to recursively update parameters for nvdi BJ moddel
 close all;
+clc;
 
-KA_kalman = [-1.9126 1.1653 -0.2207 -0.1807 0.1982 -0.0489]
-KB_kalman = [0.0223 0.0007 -0.0154 -0.0040 -0.0034]
-KC_kalman = [-1.0970 0.2706]
-
-close all;
-clc; 
+KA_kalman = [-1.9126 1.1653 -0.2207 -0.1807 0.1982 -0.0489];
+KB_kalman = [0.0223 0.0007 -0.0154 -0.0040 -0.0034];
+KC_kalman = [-1.0970 0.2706]; 
 
 % Data to put into Kalman
 yx_input = xm_xv_log;
@@ -246,7 +238,7 @@ y_input = ym_yv_log;
 N = length(y_input); 
 
 % Prediction step and number unknownd
-k = 1;                                  % OBS! Code is set up in way that k here MUST be same as above! (even though it we only need two less in prediction) 
+k = k;                                  % OBS! Code is set up in way that k here MUST be same as above! (even though it we only need two less in prediction) 
 nbr_params = length(KA_kalman) + length(KB_kalman) + length(KC_kalman);
 
 % Define the state space equations.
@@ -256,7 +248,7 @@ Re = 1e-3*eye(nbr_params);              % Try different! System noise covariance
 
 % Set initial values
 xt_t = [KA_kalman KB_kalman KC_kalman]';    
-Rxt_t1 = 1*eye(nbr_params);             % Initial covariance matrix, IF large -> small trust initial values 
+Rxt_t1 = 5*eye(nbr_params);             % Initial covariance matrix, IF large -> small trust initial values 
 
 % Storing values 
 Xsave = zeros(nbr_params,N-k);          % Stored (hidden) states
@@ -307,15 +299,21 @@ for t=41:N-k                            % Starts at 37 as we use t-36
     xStdk(:,t) = sqrt( diag(Rx_k) );    % This is one std for each of the parameters for the k-step prediction.
 end
 
-
 %% Examine the estimated parameters (for simulated data) 
 close all;
-trueParams = [KA_kalman KB_kalman KC_kalman];
 figure()
-plotWithConf( (1:N-k), Xsave', xStd', trueParams);
+% trueParams = [KA_kalman KB_kalman KC_kalman];     
+% plotWithConf( (1:N-k), Xsave', xStd', trueParams);
+plotWithConf( (1:N-k), Xsave', xStd');
+legend('a1', 'a2', 'a3', 'a36', 'c1', 'c2', 'c7', 'c9') 
+
+title('Estimated states for output data nvdi')
+xlim([42 N-k])
 
 figure()
-plot(Xsave(:,37:end)')
+plot(Xsave(:,42:end)')
+xline(modelLim-50, 'r--', 'LineWidth', 1, 'Label','');
+xlim([1, length(Xsave)-50]);
 
 %% Plot k step prediction in "right" domain
 close all; 
@@ -324,25 +322,22 @@ y_input_org = exp(y_input)-constant;
 yhatk_org = exp(yhatk)-constant;
 
 figure()
-plot( [y_input(100:end) yhatk(100:end)] ) 
+plot( [y_input(modelLim:end) yhatk(modelLim:end)] ) 
 title( sprintf('%i-step prediction using the Kalman filter wrong domain', k) )
 xlabel('Time')
 legend('Realisation', 'Kalman estimate', 'Location','SW')
-% xlim([1 N-k])
+xlim([1 length(yx_input(modelLim:end))])
 
 figure()
-plot( [y_input_org(100:end) yhatk_org(100:end)] )
+plot( [y_input_org(modelLim:end) yhatk_org(modelLim:end)] )
 title( sprintf('%i-step prediction using the Kalman filter in original domain', k) )
 xlabel('Time')
 legend('Realisation', 'Kalman estimate', 'Location','SW')
-% xlim([1 N-k])
-
-error = y_input_org(100:end)-yhatk_org(100:end); 
-plotACFnPACF(error, 40, 'Prediction using the Kalman filter');
+xlim([1 length(yx_input(modelLim:end))])
 
 %% Examine k-step prediction residual.
 % it is not the best 
-ek = yx_input_org(N-200:N-k)-yxhatk_org(N-200:N-k);             % Ignore the initial values to let the filter converge first.
+error = y_input_org(modelLim+40:end)-yhatk_org(modelLim+40:end);        % Steady state around 40 after 
 plotACFnPACF( error, 40, sprintf('%i-step prediction using the Kalman filter', k)  );
 
 fprintf('  The variance of original signal is %5.2f.\n', var(yx_input)')
