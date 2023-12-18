@@ -121,7 +121,7 @@ y = rain_org;
 a1 = 0.2491;
 A = [a1 0 0; 1 0 0; 0 1 0];    
 Re = [1e-4 0 0; 1e-6 0 0; 0 1e-6 0];            % try different values
-Rw = 1e-4;                                       % try different values
+Rw = 1e-4;                                      % try different values
 
 % Set some initial values
 xt_t1 = [0 0 0]';                               % Initial state values for rain denser time scale
