@@ -103,7 +103,6 @@ ehat = ehat(modelLim:end);
 var_ehat = var(ehat)
 var_ehat_norm = var(ehat)/var(yv_org)
 
-
 %% Test naive model on test data (ver2)
 close all; 
 yhat_k = filter(model_naive.a, model_naive.c, t);

@@ -13,7 +13,7 @@ close all
 clc
 
 load proj23.mat
-%% 2.1.1 Studying the rain data for El-Geneina
+%% 2.1 Studying the rain data for El-Geneina
 close all; 
 
 % Saving data in new variables
@@ -22,7 +22,7 @@ rain_org_t = ElGeneina.rain_org_t;
 rain = ElGeneina.rain;
 rain_t = ElGeneina.rain_t;
 
-%% 2.1.1: Gaussian analysis of original rain data
+%% 2.1: Gaussian analysis of original rain data
 close all; 
 
 nbrLags = 50;
@@ -42,7 +42,7 @@ checkIfNormal(rain_org, 'ElGeneina rain org');
 % Looking at the BJ curve we see a maximization close to zero -> suggesting
 % a log transform might be helpful
 
-%% 2.1.1: Gaussian analysis of original rain data
+%% 2.1: Gaussian analysis of original rain data
 % Adding constant and log transforming the data
 close all; 
 
@@ -60,7 +60,7 @@ plot(rain_org_t, log_rain_org)
 checkIfNormal(log_rain_org, 'ElGeneina rain_org')
 
 % It is still not Gaussian, but we look away and say yey 
-%% 2.1.1: Gaussian analysis of original rain data
+%% 2.1: Gaussian analysis of original rain data
 % Removing the mean 
 close all;
 log_rain_org_m  = log_rain_org - mean(log_rain_org);
@@ -70,7 +70,7 @@ nbrLags = 50;
 figure(3)
 plot(rain_org_t, log_rain_org_m)
 checkIfNormal(log_rain_org_m, 'ElGeneina rain_org') 
-%% 2.1.2: Finding a reasonable initial a1
+%% 2.2: Finding a reasonable initial a1
 % LOG DATA
 % We want to model our rain as an AR(1) and reconstruct the rain
 % using a Kalman filter. To get an idea of what the a parameter in the
@@ -89,7 +89,7 @@ present(model_ar)
 res = myFilter(model_ar.c, model_ar.a, log_rain_org);
 basicPlot(res, nbrLags, 'res');
 
-%% 2.1.2: Finding a reasonable initial a1 
+%% 2.2: Finding a reasonable initial a1 
 % ORIGINAL DATA
 % We want to model our rain as an AR(1) and reconstruct the rain
 % using a Kalman filter. To get an idea of what the a parameter in the
@@ -108,7 +108,7 @@ present(model_ar)
 res = myFilter(model_ar.c, model_ar.a, rain_org);
 basicPlot(res, nbrLags, 'res');
 
-%% 2.1.3: Kalman reconstruction
+%% 2.3: Kalman reconstruction
 % Now that we are done with transforming the data and have found an 
 % inital estimate for a1, lets go ahead with a Kalman reconstruction. 
 close all;
@@ -165,7 +165,7 @@ for k = 1:length(rain_kalman)
     end
 end
 
-%% 2.1.3: Kalman reconstruction
+%% 2.3: Kalman reconstruction
 % New time scale for Kalman reconstruction 
 clc
 
@@ -180,7 +180,7 @@ for t = 1:length(rain_kalman_t)
     end
 end
 
-%% 2.1.3: Kalman reconstruction
+%% 2.3: Kalman reconstruction
 % ORIGINAL DATA
 % Plotting the results
 figure(1);
@@ -196,7 +196,7 @@ sum(rain_org)
 abs(sum(rain_kalman)-sum(rain_org))
 
 save('rain_kalman.mat', 'rain_kalman', 'rain_kalman_t');
-%% 2.1.3: Kalman reconstruction
+%% 2.3: Kalman reconstruction
 % Plotting the results. if using y where it is logged data
 % LOG DATA
 figure(1);
@@ -210,7 +210,7 @@ plot(rain_t, log(rain+constant))
 sum(rain_kalman)                 
 sum(log_rain_org)                               
 abs(sum(rain_kalman)-sum(log_rain_org))
-%% 2.1.4: Simulated data
+%% 2.4: Simulated data
 % Generate the hidden states x_t+1 = a1 * x_t + et
 
 N1 = 3*N;
@@ -232,7 +232,7 @@ for i = 1:N
     y_sim(i) = x_sim(3*i) + x_sim(3*i-1) + x_sim(3*i-2) + v(i);
 end
 
-%% 2.1.4: Simulated data
+%% 2.4: Simulated data
 % Plot simulation vs reality
 close all; 
 
