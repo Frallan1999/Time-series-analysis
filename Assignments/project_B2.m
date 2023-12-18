@@ -288,7 +288,7 @@ checkIfNormal(ehat.y,'e-hat','D',0.05);
 
 % The model we will use for prediction is then MboxJ. 
 
-%% 3.3.2 Predict the input
+%% 3.4.2 Predict the input
 % Fitting an ARMA to A x = C et
 clc
 close all
@@ -344,7 +344,7 @@ save('input_arma.mat','sarima_x')
 
 
 
-%% 3.3.2 Predict the input
+%% 3.4.2 Predict the input
 % Using the derived ARMA for predicting the input 
 clc
 close all
@@ -365,10 +365,7 @@ legend('Reconstructed input rain', 'Predicted rain', 'Prediction starts')
 title( sprintf('Predicted input signal, x_{t+%i|t}', k) )
 axis([1 length(xm_xv) min(xm_xv)*1.25 max(xm_xv)*1.25])
 
-%std_xk = sqrt( sum( Fx.^2 )*var_ex );
-%fprintf( 'The theoretical std of the %i-step prediction error is %4.2f.\n', k, std_xk)
-
-%% 3.3.2 Predict the input
+%% 3.4.2 Predict the input
 % Form the residual for the validation data. It should behave as an MA(k-1)
 ehat = xm_xv - xhat_k_org;
 ehat = ehat(modelLim:end);
