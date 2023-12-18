@@ -15,7 +15,7 @@ clc
 
 load proj23.mat
 
-%% 3.3 Model B2 - NVDI prediction with rain as external input
+%% 3. Transforming the data
 % Transforming the NVDI (y) data as in B1
 
 load proj23.mat
@@ -96,7 +96,7 @@ legend('Naive model', 'Full NVDI data set')
 hold off
 
 %% 3.2.2 Model prediction
-% Form the residual for the validation data.
+% Form the residual for the validation data
 
 ehat = ym_yv_org - yhat_k_org;
 ehat = ehat(modelLim:end);
