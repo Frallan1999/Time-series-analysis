@@ -1,3 +1,4 @@
+
 %
 % Time series analysis
 % Assignment 
@@ -92,7 +93,7 @@ input_arma = sarima_x;
 load("model_B2.mat")
 model_B2 = model_B2; 
 
-%% (Simulate data for testing - the old versions) 
+%% (Simulate data for testing - before removal of parameters in Kalman) 
 clc;
 A_sim = input_arma.a;
 C_sim = input_arma.c;
@@ -109,7 +110,7 @@ sim_nvdi = filter(KC, KA, e) + filter(KB, KA, sim_rain);    % For predicting out
 sim_rain = sim_rain(extraN+1:end);
 sim_nvdi = sim_nvdi(extraN+1:end);
 
-%% 4.1 Recursive update of rain
+%% 4.1 Recursive update of rain (OLD INITIAL)
 % OLD
 % Create Kalman for recursive estimation, based on previous prediction
 % model for the rain. 
@@ -182,7 +183,7 @@ for t=37:N-k                            % Starts at 37 as we use t-36
     xStd(:,t) = sqrt( diag(Rxt_t) );    % This is one std for each of the parameters for the one-step prediction.
     xStdk(:,t) = sqrt( diag(Rx_k) );    % This is one std for each of the parameters for the k-step prediction.
 end
-%% 4.1 Recursive update of rain
+%% 4.1 Recursive update of rain 
 % Examine the estimated parameters (Hidden states)
 close all;
 figure()
@@ -191,6 +192,10 @@ trueParams = [-0.1626 -0.2716 -0.5327 0.1276 0.3341 -0.2683 0.2605];     % For s
 plotWithConf( (1:N-k), Xsave', xStd');
 legend('a1', 'a2', 'a36', 'c1', 'c2', 'c7', 'c9') 
 title('Estimated states for input data rain')
+xlim([37 N-k])
+
+figure()
+plotWithConf( (1:N-k), Xsave(4,:)', xStd(4,:)');
 xlim([37 N-k])
 
 figure()
@@ -206,7 +211,7 @@ for k0=1:length(Xsave(:,1))
     fprintf('Estimated value: %5.2f (+/- %5.4f).\n', Xsave(k0,end), xStd(k0,end) )
 end 
 
-%% 4.1 Recursive update of rain
+%% 4.1 Recursive update of rain FINAL
 % FINAL recursive model for the rain 
 % C1 PARAMETER HAS BEEN REMOVED!!
 
@@ -287,6 +292,7 @@ figure()
 % trueParams = [-0.1626 -0.2716 -0.5327 0.1276 0.3341 -0.2683 0.2605];   % For simulated data
 % plotWithConf( (1:N-k), Xsave', xStd', trueParams);                     % For simulated data
 plotWithConf( (1:N-k), Xsave', xStd');
+
 legend('a1', 'a2', 'a36', 'c2', 'c7', 'c9') 
 title('Estimated states for input data rain')
 xlim([37 N-k])
@@ -303,7 +309,9 @@ fprintf('The final values of the Kalman estimated parameters are:\n')
 for k0=1:length(Xsave(:,1))
     fprintf('Estimated value: %5.2f (+/- %5.4f).\n', Xsave(k0,end), xStd(k0,end) )
 end 
-%% Plot k step prediction in "right" domain
+
+%% 4.1 Recursive update of rain
+% Plot k step prediction in "right" domain
 close all; 
 
 yx_input_org = exp(yx_input)-constant;
@@ -324,16 +332,20 @@ legend('Realisation', 'Kalman estimate', 'Location','SW')
 xlim([1 length(yx_input(modelLim:end))])
 % axis([xv_t(1) xv_t(end) min(yx_input_org)*0.9 max(yx_input_org)*1.1])
 
-%% Examine k-step prediction residual.
+%% 4.1 Recursive update of rain 
+% Examine k-step prediction residual.
 % it is not the best
-error = yx_input_org(modelLim+20:end)-yxhatk_org(modelLim+20:end);  % Plotting hidden states above, seems to have reached a steady state after about 20 
+error = yx_input_org(modelLim+20:end)-yxhatk_org(modelLim+20:end);          % Plotting hidden states above, seems to have reached a steady state after about 20 
+errorM = yx_input_org(20:modelLim-1)-yxhatk_org(20:modelLim-1);  
+errorMV = [error' errorM']';
 plotACFnPACF( error, 40, sprintf('%i-step prediction using the Kalman filter', k)  );
 
-fprintf('  The variance of original signal (still logged including model data) is %5.2f.\n', var(yx_input)')
 fprintf('  The variance of original signal (still logged only validation) is %5.2f.\n', var(xv_log)')
 fprintf('  The variance of the %i-step prediction residual is %5.2f.\n', k, var(error)')
+fprintf('  The variance of the %i-step prediction residual is %5.2f.\n', k, var(errorMV)')
 
-%% Kalman filter to recursively update parameters for nvdi BJ moddel
+
+%% 4.2 Recursive update of NVDI - model C INITIAL
 % OLD! 
 % Initial guess of kalman filter using B2 model as guide 
 close all;
@@ -356,8 +368,8 @@ nbr_params = length(KA_kalman) + length(KB_kalman) + length(KC_kalman);
 
 % Define the state space equations.
 A = eye(nbr_params);                    % Hidden states matrix 
-Rw = var(y_input);                                % Try different! Measurement noise covariance matrix. Could use from noise estimate polynomial pred
-Re = 1e-3*eye(nbr_params);              % Try different! System noise covariance matrix. 
+Rw = var(y_input);                      % Try different! Measurement noise covariance matrix. Could use from noise estimate polynomial pred
+Re = 1e-6*eye(nbr_params);              % Try different! System noise covariance matrix. 
 
 % Set initial values
 xt_t = [KA_kalman KB_kalman KC_kalman]';    
@@ -412,8 +424,8 @@ for t=41:N-k                            % Starts at 37 as we use t-36
     xStdk(:,t) = sqrt( diag(Rx_k) );    % This is one std for each of the parameters for the k-step prediction.
 end
 
-
-%% Examine the estimated parameters (for simulated data) 
+%% 4.2 Recursive update of NVDI - model C
+% Examine the estimated parameters (for simulated data) 
 close all;
 figure()
 % trueParams = [KA_kalman KB_kalman KC_kalman];     
@@ -431,18 +443,18 @@ xlim([1, length(Xsave)-50]);
 
 fprintf('The final values of the Kalman estimated parameters are:\n')
 for k0=1:length(Xsave(:,1))
-    fprintf('Estimated value: %5.2f (+/- %5.4f).\n', xt(k0,end), xStd(k0,end) )
+    fprintf('Estimated value: %5.2f (+/- %5.4f).\n', Xsave(k0,end), xStd(k0,end) )
 end 
 
-%% Kalman filter to recursively update parameters for nvdi BJ moddel
-% FINAL KALMAN
-% REMOVED B4, B40, B5, B39, A1
+%% 4.2 Recursive update of NVDI - model C FINAL
+% THIS IS THE FINAL KAMLAN FILTER
+% Parameters excluded: b4, b3, b5, a38, c1, b40, a2, and a37
 close all;
 clc;
 
-KA_kalman = [-1.01 -0.0001 4.5 6.4 11.12];
-KB_kalman = [4.23];
-KC_kalman = [7.15 0.0001]; 
+KA_kalman = [-0.68 -0.13 -0.21];
+KB_kalman = [0.02];
+KC_kalman = [0.11]; 
 
 % Data to put into Kalman
 yx_input = xm_xv_log;
@@ -458,7 +470,7 @@ nbr_params = length(KA_kalman) + length(KB_kalman) + length(KC_kalman);
 % Define the state space equations.
 A = eye(nbr_params);                    % Hidden states matrix 
 Rw = var(y_input);                      % Try different! Measurement noise covariance matrix. Could use from noise estimate polynomial pred
-Re = 1*eye(nbr_params);                 % Try different! System noise covariance matrix. 
+Re = 1e-10*eye(nbr_params);             % Try different! System noise covariance matrix. 
 
 % Set initial values
 xt_t = [KA_kalman KB_kalman KC_kalman]';    
@@ -479,7 +491,7 @@ xStdk = zeros(nbr_params,N-k);          % Stores one std for the k-step predicti
 for t=41:N-k                            % Starts at 37 as we use t-36
     % Update the predicted state and the time-varying state vector.
     xt_t1 = A*xt_t;                     % x_{t|t-1} = A x_{t-1|t-1}
-    Ct = [ -y_input(t-1) -y_input(t-3) -y_input(t-36) -y_input(t-37) -y_input(t-38) yx_input(t-3) ehat(t-1) ehat(t-2) ];
+    Ct = [ -y_input(t-1)  -y_input(t-3) -y_input(t-36) yx_input(t-39) ehat(t-2) ];
     
     % Update the parameter estimates.
     Ryt_t1 = Ct * Rxt_t1 * Ct' + Rw;    % R^yy_{t | t-1} = C R^xx_{t|t-1} + Rw
@@ -499,7 +511,7 @@ for t=41:N-k                            % Starts at 37 as we use t-36
     Rx_k = Rxt_t1;
 
     for k0=1:k
-        Ck = [ -y_t_input(t+k0-1) -y_t_input(t+k0-3) -y_t_input(t+k0-36) -y_t_input(t+k0-37) -y_t_input(t+k0-38) yx_t_input2(t+k0-3) ehat(t+k0-1) ehat(t+k0-2)];
+        Ck = [ -y_t_input(t+k0-1)  -y_t_input(t+k0-3) -y_t_input(t+k0-36) yx_t_input2(t+k0-39) ehat(t+k0-2)];
         yk = Ck*A^k*xt_t;               % \{yhat}_{t+k|t} = C_{t+k|t} A^k x_{t|t}
         y_t_input(t+k0) = yk ;  
         Rx_k = A*Rx_k*A' + Re;
@@ -513,7 +525,8 @@ for t=41:N-k                            % Starts at 37 as we use t-36
     xStdk(:,t) = sqrt( diag(Rx_k) );    % This is one std for each of the parameters for the k-step prediction.
 end
 
-%% Examine the estimated parameters (for simulated data) 
+%% 4.2 Recursive update of NVDI - model C
+% Examine the estimated parameters (for simulated data) 
 close all;
 figure()
 % trueParams = [KA_kalman KB_kalman KC_kalman];     
@@ -526,15 +539,16 @@ xlim([42 N-k])
 figure()
 plot(Xsave(:,42:end)')
 xline(modelLim-50, 'r--', 'LineWidth', 1, 'Label','');
-legend('a1', 'a3', 'a36', 'a37', 'a38', 'b3', 'c1', 'c2')
+legend('a1', 'a3', 'a36', 'b39', 'c2')
 xlim([1, length(Xsave)-50]);
 
 fprintf('The final values of the Kalman estimated parameters are:\n')
 for k0=1:length(Xsave(:,1))
-    fprintf('Estimated value: %5.2f (+/- %5.4f).\n', xt(k0,end), xStd(k0,end) )
+    fprintf('Estimated value: %5.2f (+/- %5.4f).\n', Xsave(k0,end), xStd(k0,end) )
 end 
 
-%% Plot k step prediction in "right" domain
+%% 4.2 Recursive update of NVDI - model C
+% Plot k step prediction in "right" domain
 close all; 
 
 y_input_org = 1/2*(ym_yv+1)*(max_data - min_data)+min_data;
@@ -555,13 +569,16 @@ xlabel('Time')
 legend('Realisation', 'Kalman estimate', 'Location','SW')
 xlim([1 length(yx_input(modelLim:end))])
 
-%% Examine k-step prediction residual.
+%% 4.2 Recursive update of NVDI - model C
+% Examine k-step prediction residual.
 % it is not the best 
 error = y_input_org(modelLim+40:end)-yhatk_org(modelLim+40:end);        % Steady state around 40 after 
+
 mean_error = abs(mean(error))
 plotACFnPACF( error, 40, sprintf('%i-step prediction using the Kalman filter', k)  );
+errorM = y_input_org(40:modelLim-1)-yhatk_org(40:modelLim-1); 
+errorMV = [error' errorM']';
 
-fprintf('  The variance of original signal is %5.2f.\n', var(yx_input)')
 fprintf('  The variance of the %i-step prediction residual is %5.2f.\n', k, var(error)')
-
-
+fprintf('  The variance of the %i-step prediction residual is %5.2f.\n', k, var(errorMV)')
+fprintf('  The normalized variance of the %i-step prediction residual is %5.2f.\n', k, var(error)/var(vm_org(40:end)))
