@@ -9,7 +9,7 @@ close all;
 addpath('../functions', '../data')      % Add this line to update the path (Hanna)
 %% 1. Introduction to the data
 load proj23.mat
-%% 2.1.1 Studying the rain data for Kassala
+%% 2.1 Studying the rain data for Kassala
 close all; 
 
 % Saving data in new variables
@@ -24,7 +24,7 @@ figure
 plot(ElGeneina.rain_t, ElGeneina.rain)
 
 
-%% 2.1.1 Studying the rain data for Kassala
+%% 2.1: Gaussian analysis of original rain data
 % Are outliers a problem? 
 
 nbrLags = 50;
@@ -42,7 +42,7 @@ tacf(rain_org, nbrLags, 0.0, 0.01 ,1);
 hold off
 title('ACF and TACF with alpha=0.01')
 
-%% 2.1.1 Studying the rain data for Kassala
+%% 2.1: Gaussian analysis of original rain data
 % Identifying outliers
 close all
 clc
@@ -64,7 +64,7 @@ plot(rain_org_t(o4),rain_org(o4),'r*');
 legend('data','637','639','454','201');
 hold off
 
-%% 2.1.1 Studying the rain data for Kassala
+%% 2.1: Gaussian analysis of original rain data
 % Substituting the outliers
 close all
 clc
@@ -77,7 +77,7 @@ rain_org_e(o4) = (rain_org_e(o4-1) + rain_org_e(o4+1))*1/2;
 
 plot(rain_org_e);
 
-%% 2.1.1 Studying the rain data for Kassala
+%% 2.1: Gaussian analysis of original rain data
 % Did it make a difference? Nope!
 close all
 clc
@@ -97,7 +97,7 @@ tacf(rain_org_e, nbrLags, 0.01, 0.01 ,1);
 hold off
 title('ACF and TACF with alpha=0.01')
 
-%% 2.1.1: Gaussian analysis of original rain data
+%% 2.1: Gaussian analysis of original rain data
 close all; 
 
 nbrLags = 50;
@@ -117,7 +117,7 @@ checkIfNormal(rain_org, 'Kassala rain org');
 % Looking at the BJ curve we see a maximization close to zero -> suggesting
 % a log transform might be helpful
 
-%% 2.1.1: Gaussian analysis of original rain data
+%% 2.1: Gaussian analysis of original rain data
 % Adding constant and log transforming the data
 close all; 
 
@@ -152,7 +152,7 @@ checkIfNormal(log_rain_org, 'Kassala log rain')
 % res = myFilter(model_ar.c, model_ar.a, log_rain_org);
 % basicPlot(res, nbrLags, 'res');
 
-%% 2.1.2: Finding a reasonable initial a1 
+%% 2.2: Finding a reasonable initial a1 
 % ORIGINAL DATA
 % We want to model our rain as an AR(1) and reconstruct the rain
 % using a Kalman filter. To get an idea of what the a parameter in the
@@ -171,7 +171,7 @@ present(model_ar)
 res = myFilter(model_ar.c, model_ar.a, rain_org);
 basicPlot(res, nbrLags, 'res');
 
-%% 2.1.3: Kalman reconstruction
+%% 2.3: Kalman reconstruction
 % Now that we are done with transforming the data and have found an 
 % inital estimate for a1, lets go ahead with a Kalman reconstruction. 
 close all;
@@ -227,7 +227,7 @@ for k = 1:length(rain_kalman)
     end
 end
 
-%% 2.1.3: Kalman reconstruction
+%% 2.3: Kalman reconstruction
 % Finding the a1 that minimize the sum error (turned out to be a1 = 0.1720)
 close all;
 
@@ -294,7 +294,7 @@ end
 a1 = A1(minindex);
 plot(A1, diff)
 
-%% 2.1.3: Kalman reconstruction
+%% 2.3: Kalman reconstruction
 % New time scale for Kalman reconstruction 
 clc
 
@@ -309,7 +309,7 @@ for t = 1:length(rain_kalman_t)
     end
 end
 
-%% 2.1.3: Kalman reconstruction
+%% 2.3: Kalman reconstruction
 % ORIGINAL DATA
 % Plotting the results
 figure(1);
