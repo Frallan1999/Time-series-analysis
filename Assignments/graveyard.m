@@ -552,3 +552,44 @@ conf = 2*sqrt(theoretical_variance);
 conf_int = [0-conf, 0+conf]
 error_outside = (sum(error_org>conf_int(2)) + sum(error_org<conf_int(1)))/length(error_org)
 
+%% Test naive model on validation data
+close all; 
+clc; 
+k = 37;                  % sets number of steps prediction
+% very bad with k less than 37!!!
+
+% Solve the Diophantine equation and create predictions
+[Fk, Gk] = polydiv(model_naive.c, model_naive.a, k);
+throw = max(length(Gk), length(model_naive.c));
+yhat_k = filter(Gk, model_naive.c, v);
+yhat_k = yhat_k(throw:end);
+
+% It can be seen that the shift is IN GENERAL this (and is fun to then
+% incorporate to be able to plot for both shifted and non shifted
+if k == 1 || k == 2
+    shift = k; 
+else 
+    shift = 3; 
+end
+
+% Create the errors (shifted and unshifted, original domain vs not) 
+error_org_shifted = v(throw:end-shift) - yhat_k(1+shift:end);
+error_org = v(throw:end) - yhat_k;
+var(error_org)
+var(error_org_shifted)
+
+% Original domain plot (not shifted)
+figure()
+hold on
+plot(yhat_k,'g');
+plot(v(throw:end));
+hold off
+basicPlot(error_org,noLags,'Original domain not shifted')
+
+% Original domain plot (shifted)
+figure()
+hold on
+plot(yhat_k(1+shift:end),'g');
+plot(v(throw:end-shift));
+hold off
+basicPlot(error_org,noLags,'Original domain')
