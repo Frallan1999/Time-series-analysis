@@ -56,15 +56,18 @@ ym_yv_log = log(ym_yv);
 modelLim = length(ym)+1; % Index for first data in validation set
 testlim = length(ym_yv)+1; % Index for first data in test set
 
-%% Naive model
-% Let's say vegetation is the same as 1 year ago  
+%% Test naive model on validation data
 close all; 
 clc;
 
-noLags = 50; 
-A = [1 zeros(1,35) 1];
-C = [1];
+ym_yv_org = 1/2*(ym_yv+1)*(max_data - min_data) + min_data;
+yhat_org = length(ym_yv_org);
 
+<<<<<<< HEAD
+for t=37:length(ym_yv_org)
+    yhat_org(t) = ym_yv_org(t-36);
+end
+=======
 model_naive = idpoly(A, [], C);
 present(model_naive);
 
@@ -109,10 +112,39 @@ yhat_k = filter(model_naive.a, model_naive.c, t);
 yhat_k = yhat_k(length(model_naive.a):end)
 error_org = t(length(model_naive.a):end) - yhat_k;
 var(error_org)   % 0.0076
+>>>>>>> ae9b042921b915ded7f43c1e41446b2b4774bbf3
 
 figure()
-hold on
-plot(yhat_k,'g');
-plot(t(length(model_naive.a):end));
-hold off
-% basicPlot(error_org,noLags,'Original domain not shifted')
+hold on 
+plot(ym_yv_org(modelLim:end));
+plot(yhat_org(modelLim:end));
+title('Naive model prediction')
+xlabel('Time')
+legend('Realisation', 'Kalman estimate', 'Location','SW')
+
+error = ym_yv_org(modelLim:end)'-yhat_org(modelLim:end);   
+fprintf('  The variance of the naive model residual on validation data is %5.2f.\n', var(error)')
+fprintf('  The normalized variance of the naive model residual on validation data is %5.2f.\n', var(error)/var(yv_org))
+
+
+%% Test naive model on test data
+close all; 
+clc;
+
+yhat_org = length(y_org);
+
+for t=37:length(y_org)
+    yhat_org(t) = y_org(t-36);
+end
+
+figure()
+hold on 
+plot(y_org(testlim:end));
+plot(yhat_org(testlim:end));
+title('Naive model prediction')
+xlabel('Time')
+legend('Realisation', 'Kalman estimate', 'Location','SW')
+
+error = y_org(testlim:end)'-yhat_org(testlim:end);   
+fprintf('  The variance of the naive model residual on test data is %5.2f.\n', var(error)')
+fprintf('  The normalized variance of the naive model residual on test data is %5.2f.\n', var(error)/var(yt_org))
