@@ -7,6 +7,68 @@ clear;
 close all;
 % addpath('functions', '/data')     % Add this line to update the path
 addpath('../functions', '../data')     % Add this line to update the path (Hanna)
+
+%% Test naive model on validation data
+close all; 
+clc
+
+
+yhat = filter(model_naive.a, model_naive.c, ym_yv_log); 
+yhat = yhat(length(model_naive.a):end);
+
+yhat_org = exp(yhat);
+yhat_org = 1/2*(yhat_org+1)*(max_data - min_data) + min_data;
+ym_yv_org = 1/2*(ym_yv+1)*(max_data - min_data) + min_data;
+ym_yv_org_dim = ym_yv_org(length(model_naive.a):end);
+
+figure()
+plot( [ym_yv_org_dim(modelLim:end) yhat_org(modelLim:end)] )
+title('Naive model prediction')
+xlabel('Time')
+legend('Realisation', 'Kalman estimate', 'Location','SW')
+%xlim([1 length(ym_yv_org(modelLim:end))])
+%%
+figure
+plot(ym_yv_t, [ym_yv_org yhat_org] )
+line( [ym_yv_t(modelLim) ym_yv_t(modelLim)], [0 200 ], 'Color','red','LineStyle',':' )
+legend('NVDI', 'Naive model', 'Prediction starts')
+% title( sprintf('Predicted NVDI, validation data, y_{t+%i|t}', k) )
+% axis([ym_yv_t(length(ym)) ym_yv_t(end) min(yhat_org)*0.9 max(ym_yv_org)*1.1])
+
+
+figure
+hold on
+plot(yhat_org)
+plot(ym_yv_org)
+legend('Naive model', 'Full NVDI data set')
+hold off
+
+%% 3.2.2 Model prediction
+% Form the residual for the validation data
+
+ehat = ym_yv_org - yhat_k_org;
+ehat = ehat(modelLim:end);
+var_ehat = var(ehat)
+var_ehat_norm = var(ehat)/var(yv_org)
+
+
+%% Test naive model on validation data
+close all; 
+clc
+
+yhat_org = filter(model_naive.a, model_naive.c, ym_yv_org); 
+yhat_org = yhat_org(length(model_naive.a):end);
+ym_yv_org_dim = ym_yv_org(length(model_naive.a):end);
+
+figure()
+plot(ym_yv_org_dim(modelLim:end));
+plot(yhat_org(modelLim:end));
+title('Naive model prediction')
+xlabel('Time')
+legend('Realisation', 'Kalman estimate', 'Location','SW')
+xlim([1 length(ym_yv_org(modelLim:end))])
+
+
 %% B1 model prediction 
 hold on
 plot(yhat_k(1+shiftK:end));         % blue

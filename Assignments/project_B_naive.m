@@ -56,64 +56,48 @@ ym_yv_log = log(ym_yv);
 modelLim = length(ym)+1; % Index for first data in validation set
 testlim = length(ym_yv)+1; % Index for first data in test set
 
-%% Naive model
-% Let's say vegetation is the same as 1 year ago  
+%% Test naive model on validation data
 close all; 
 clc;
 
-noLags = 50; 
-A = [1 zeros(1,35) 1];
-C = [1];
+ym_yv_org = 1/2*(ym_yv+1)*(max_data - min_data) + min_data;
+yhat_org = length(ym_yv_org);
 
-model_naive = idpoly(A, [], C);
-present(model_naive);
-
-%% Test naive model on validation data (ver2)
-close all; 
-clc
-
-k = 1;
-
-yhat_k = filter(model_naive.a, model_naive.c, ym_yv_log); 
-yhat_k = yhat_k(end-length(ym_yv)+1:end);
-
-yhat_k_org = exp(yhat_k);
-yhat_k_org = 1/2*(yhat_k_org+1)*(max_data - min_data)+min_data;
-ym_yv_org = 1/2*(ym_yv+1)*(max_data - min_data)+min_data;
-
-figure
-plot(ym_yv_t, [ym_yv_org yhat_k_org] )
-line( [ym_yv_t(modelLim) ym_yv_t(modelLim)], [0 200 ], 'Color','red','LineStyle',':' )
-legend('NVDI', 'Naive model', 'Prediction starts')
-title( sprintf('Predicted NVDI, validation data, y_{t+%i|t}', k) )
-axis([ym_yv_t(length(ym)) ym_yv_t(end) min(yhat_k_org)*0.9 max(ym_yv_org)*1.1])
-
-figure
-hold on
-plot(yhat_k_org)
-plot(ym_yv_org)
-legend('Naive model', 'Full NVDI data set')
-hold off
-
-%% 3.2.2 Model prediction
-% Form the residual for the validation data
-
-ehat = ym_yv_org - yhat_k_org;
-ehat = ehat(modelLim:end);
-var_ehat = var(ehat)
-var_ehat_norm = var(ehat)/var(yv_org)
-
-
-%% Test naive model on test data (ver2)
-close all; 
-yhat_k = filter(model_naive.a, model_naive.c, t);
-yhat_k = yhat_k(length(model_naive.a):end)
-error_org = t(length(model_naive.a):end) - yhat_k;
-var(error_org)   % 0.0076
+for t=37:length(ym_yv_org)
+    yhat_org(t) = ym_yv_org(t-36);
+end
 
 figure()
-hold on
-plot(yhat_k,'g');
-plot(t(length(model_naive.a):end));
-hold off
-% basicPlot(error_org,noLags,'Original domain not shifted')
+hold on 
+plot(ym_yv_org(modelLim:end));
+plot(yhat_org(modelLim:end));
+title('Naive model prediction')
+xlabel('Time')
+legend('Realisation', 'Kalman estimate', 'Location','SW')
+
+error = ym_yv_org(modelLim:end)'-yhat_org(modelLim:end);   
+fprintf('  The variance of the naive model residual on validation data is %5.2f.\n', var(error)')
+fprintf('  The normalized variance of the naive model residual on validation data is %5.2f.\n', var(error)/var(yv_org))
+
+
+%% Test naive model on test data
+close all; 
+clc;
+
+yhat_org = length(y_org);
+
+for t=37:length(y_org)
+    yhat_org(t) = y_org(t-36);
+end
+
+figure()
+hold on 
+plot(y_org(testlim:end));
+plot(yhat_org(testlim:end));
+title('Naive model prediction')
+xlabel('Time')
+legend('Realisation', 'Kalman estimate', 'Location','SW')
+
+error = y_org(testlim:end)'-yhat_org(testlim:end);   
+fprintf('  The variance of the naive model residual on test data is %5.2f.\n', var(error)')
+fprintf('  The normalized variance of the naive model residual on test data is %5.2f.\n', var(error)/var(yt_org))
