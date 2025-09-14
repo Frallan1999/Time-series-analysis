@@ -7,7 +7,7 @@ Coruse contained 3 computer exercises and one larger project conatining substeps
 - `data/` → datasets  
 - `notebooks/` → assignments, experiments, analysis scripts  
 - `src/` → reusable functions  
-- `docs/` → lecture codes and computer exercises and project description
+- `docs/` → lecture codes and description of computer exercises and project 
 
 ## Notes
 This repo was restructured on 2025-09-14 (see tag `pre-cleanup-20250914` for old version).
