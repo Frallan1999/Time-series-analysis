@@ -1,6 +1,6 @@
 # Time Series Analysis
 
-This repository contains assignments, functions, and lecture notes for learning time series analysis.
+This repository contains assignments, functions, and lecture notes for the course time series analysis at LTH.
 
 ## Structure
 - `data/` → datasets  
