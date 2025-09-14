@@ -1,0 +1,12 @@
+# macOS system files
+.DS_Store
+
+# Autosave files
+*.asv
+
+# Python cache
+__pycache__/
+
+# RStudio junk
+.Rhistory
+.RData
